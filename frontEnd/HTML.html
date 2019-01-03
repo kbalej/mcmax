@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>McMax</title>
+    <meta charset="utf-8" />
+    <meta name="keywords" content="mcmax.biz,Access for the Cloud,Forms,Reports,Tables,HTML,CSS,JavaScript,Angular,Node,Sql server,mongoDB">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular-resource.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular-route.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular-sanitize.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBwpqR6k4G3q-Bus5Kf83S4tPH9dMfAlcQ"></script>
+
+    <style>
+        .modal-header, h4, .close {
+            background-color: #5cb85c;
+            color: white;
+            text-align: center;
+            font-size: 30px;
+        }
+
+        .modal-footer {
+            background-color: #f9f9f9;
+        }
+
+        .fieldError {
+            border: 2px solid red;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="MAIN" ng-app="mmApp" ng-controller="mmCtrl">
+
+        <!--LOGIN-->
+
+        <div class="container" ng-show="x_page && x_page == 'LOGIN'">
+            <div class="header" style="padding:1px 50px;">
+                <h4>
+                    your Apps Factory<br /><br />
+                    <span class="glyphicon glyphicon-lock"></span> McMax<br />
+                </h4>
+            </div>
+            <div class="body" style="padding:40px 50px;">
+                <form role="form">
+                    <div class="form-group">
+                        <label for="usrname"><span class="glyphicon glyphicon-user"></span> Username</label>
+                        <input type="password" class="form-control" id="usrname" placeholder="Enter Username" ng-model="login.usrname" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="psw"><span class="glyphicon glyphicon-eye-open"></span> Password</label>
+                        <input type="password" class="form-control" id="psw" placeholder="Enter password" ng-model="login.password" required>
+                    </div>
+                    <button type="submit" ng-click="log_in()" class="btn btn-success btn-block"><span class="glyphicon glyphicon-off"></span> Login</button>
+                    <center class="error">{{error}}</center>
+                    <textarea cols="60" rows='30' class='form-control' ng-model='xTemp'></textarea>
+                </form>
+            </div>
+        </div>
+
+
+        <div class="container" ng-show="x_page && x_page != 'LOGIN'">
+
+            <!--NAVBAR -->
+
+            <nav class="navbar navbar-inverse" ng-show="xEditForm.$pristine && x_n.length < 1">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#NavbarMain">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="#">{{x_o.name}}</a>
+                    </div>
+                    <div>
+                        <div class="collapse navbar-collapse" id="NavbarMain">
+                            <ul class="nav navbar-nav" ng-show="xEditForm.$pristine" ng-repeat="i in x_o.forms">
+                                <li ng-show="!i.parent"><a href="#" ng-click="navMain(i.name)">{{i.name}}</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <nav class="navbar navbar-inverse" ng-show="xEditForm.$pristine && x_n.length > 0">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#NavbarUp">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-arrow-up"></span></a>
+                    </div>
+                    <div class="collapse navbar-collapse" id="NavbarUp">
+                        <ul class="nav navbar-nav" ng-show="xEditForm.$pristine && x_n.length > 0" ng-repeat="i in x_n">
+                            <li><a href="#" ng-click="navUp(i)">{{i.form}}</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <nav class="navbar navbar-default" ng-show="x_page.substring(0, 4) == 'LIST'">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="#">{{x_form}}: </a>
+                    </div>
+                    <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].pages">
+                        <li ng-show="i.name.substring(0,4) == 'LIST'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
+                    </ul>
+                </div>
+            </nav>
+            <nav class="navbar navbar-default" ng-show="x_page.substring(0, 4) == 'EDIT'">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="#">{{x_form}}: </a>
+                    </div>
+                    <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].pages">
+                        <li ng-show="i.name.substring(0,4) == 'EDIT'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div id="Googlemap" ng-show="x_o.forms[x_form].fieldsMap && x_o.forms[x_form].fieldsMap.length > 0 && x_page.substring(0, 7) == 'EDITmap'" style="height: 500px; width: 100%;"></div>
+
+            <!--SEARCH-->
+
+            <form role="form" name="xSearchForm" ng-show="x_page.substring(0, 6) == 'SEARCH'" novalidate autocomplete="off">
+                <div id="searchItems" class="form-group" ng-switch="x_form">
+
+                    <!--htmlSearch-->
+
+                </div>
+                <div class="form-group">
+                    <br />
+                    <div class="btn-group btn-group-justified">
+                        <a href="#" class="btn btn-primary" ng-click="xStartSearch()">Search</a>
+                        <a href="#" class="btn btn-primary" ng-click="xCancel(xSearchForm)">Cancel</a>
+                    </div>
+                </div>
+            </form>
+
+            <!--LIST-->
+
+            <div class="panel" ng-show="x_page.substring(0, 4) == 'LIST' && x_page != 'LISTDOCUMENT' && x_page != 'LISTGRAPH' && x_page != 'LISTCAROUSEL' && x_page != 'LISTTREE'">
+                <span ng-show="x_o.forms[x_form].search">{{xSearchListTitle}}</span> <span ng-show="myOrderBy"> Order by {{myOrderBy.substring(9)}}</span>
+                <div class="input-group">
+                    <span class="input-group-btn">
+                        <input type="range" name="points" min="1" max="{{x_rowsMax}}" step="1" ng-model="x_pageCt" ng-change="xInit()">
+                        <button ng-click="xAdd()" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span> {{x_masterName}} </button>
+                    </span>
+                </div>
+                <div id="listItems" ng-switch='x_page + x_form'>
+
+                    <!--htmlList-->
+
+                </div>
+                <div class="btn-group btn-group-justified">
+                    <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
+                </div>
+            </div>
+
+            <!--LISTTREE-->
+
+            <div class="panel" ng-show="x_page == 'LISTTREE'">
+            </div>
+
+            <!--EDIT-->
+
+            <form role="form" name="xEditForm" ng-show="x_page.substring(0, 4) == 'EDIT'" novalidate autocomplete="off">
+                <div id="editItems" class="form-group" ng-switch="x_page + x_form">
+
+                    <!--htmlEdit-->
+
+                </div>
+                <div class="form-group">
+                    <br />
+                    <div class="btn-group btn-group-justified">
+                        <a href="#" class="btn btn-primary" ng-click="xSave(xEditForm)" ng-show="xEditForm.$dirty">Save</a>
+                        <a href="#" class="btn btn-primary" ng-click="xCancel(xEditForm)">Cancel</a>
+                        <a href="#" class="btn btn-primary" ng-click="xDelete(xEditForm)" ng-show="xElement.ID">Delete</a>
+                        <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
+                    </div>
+                </div>
+            </form>
+
+            <!--VIEW-->
+
+            <form role="form" name="xViewForm" ng-show="x_page.substring(0, 4) == 'VIEW'">
+                <div id="viewItems" class="form-group" ng-switch="x_page + x_form">
+
+                    <!--htmlView-->
+
+                </div>
+                <div class="form-group">
+                    <br />
+                    <div class="btn-group btn-group-justified">
+                        <a href="#" class="btn btn-primary" ng-click="xCancel(xViewForm)">Cancel</a>
+                    </div>
+                </div>
+            </form>
+
+            <nav class="navbar navbar-inverse" ng-show="xEditForm.$pristine && x_o.forms[x_form].subForms.length > 0 && ( x_page.substring(0,4) == 'EDIT' || x_page.substring(0,4) == 'VIEW' )  && xElement.ID != ''">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#NavbarDown">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-arrow-down"></span></a>
+                    </div>
+                    <div class="collapse navbar-collapse" id="NavbarDown">
+                        <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].subForms">
+                            <li><a href="#" ng-click="navDown(i)">{{i}}</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+        </div>
+    </div>
+
+    <script>
+                //Script.js//
+    </script>
+
+</body>
+
+</html>

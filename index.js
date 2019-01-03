@@ -1,0 +1,16 @@
+﻿var server = require("./server");
+var router = require("./router");
+var requestHandlers = require("./requestHandlers");
+var sql = require("./sql");
+var sqlmy = require("./sqlmy");
+var sqlmongo = require("./sqlmongo");
+var dbh = sql;
+var handle = {};
+handle["/login"] = requestHandlers.login;
+handle["/upload"] = requestHandlers.upload;
+handle["/HTML.html"] = requestHandlers.load;
+handle["/KB_x_getAll"] = requestHandlers.KB_x_getAll;
+handle["/KB_x_addUpdate"] = requestHandlers.KB_x_addUpdate;
+handle["/KB_x_delete"] = requestHandlers.KB_x_delete;
+handle["/KB_x_sequencePut"] = requestHandlers.KB_x_sequencePut;
+server.start(router.route, handle,dbh);
