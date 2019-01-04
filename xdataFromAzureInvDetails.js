@@ -33,6 +33,10 @@ connection.on('connect', function (err) {
                 var masterId = doc.masterID;
                 delete doc.ID;
                 delete doc.masterID;
+                if (doc.service === 'Lessive' || doc.service === 'Divers') {
+                    doc.hourlyRate = doc.cost;
+                    doc.hoursWorked = 1;
+                }
                 var o = {};
                 o.ID = id;
                 o.masterID = masterId;
