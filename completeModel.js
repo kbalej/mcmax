@@ -225,7 +225,11 @@ function start(x_o) {
                                     vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='datetime-local' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
                                     break;
                                 case "number":  // input type number does not display value, replaced by text
-                                    vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    if(c.autoNumber || c.calcNumber) {   // readonly
+                                        vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' readonly >";
+                                    }else {
+                                        vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    }
                                     break;
                                 case "textArea":
                                     vhtmlEdit += "<textarea id='" + x_o.forms[f].name + c.name + "' " + vhide + " rows='" + c.rows + "' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ></textarea>";
@@ -253,6 +257,9 @@ function start(x_o) {
                                     vhtmlEdit += "<input type='text' class='form-control' placeholder='Longitude' readonly ng-model='xElement.infoJSON." + c.name + "Longitude'>";
                                     vhtmlEdit += "<input type='text' class='form-control' placeholder='Latitude' readonly ng-model='xElement.infoJSON." + c.name + "Latitude'>";
                                     vhtmlEdit += "<input type='text' class='form-control' placeholder='Zoom' readonly ng-model='xElement.infoJSON." + c.name + "Zoom'>";
+                                    break;
+                                case "doc":
+                                    vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' type='text' class='form-control' ng-model='xElement.infoJSON." + c.name + "' readonly > <input type='button' ng-click='doc()' value='print' >";
                                     break;
                                 case "lookup":
                                     vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
