@@ -228,14 +228,17 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                         if (c !== undefined && c.label !== undefined) { // skip pages without fields and no show fields
                             if (c.default !== undefined) {
                                 if (c.fieldType === "date" || c.fieldType === "datetime" || c.fieldType === "local" || c.fieldType === "month" || c.fieldType === "time" || c.fieldType === "week") {
-                                    var p = new RegExp("today");
-                                    var r = p.test(c.default);
+                                    var td = new RegExp("today");
+                                    var r = td.test(c.default);
                                     var i = parseInt(c.default);
                                     if(r){ // eg '-10today' for 10 days before today, +-number first !
                                         var d = new Date();
                                         if (!isNaN(i)) {
-                                            res.setDate(d.getDate() + i)
+                                            d.setDate(d.getDate() + i)
                                         }
+                                        $scope.xElement.infoJSON[c.name]=d;
+                                    } else {
+                                        $scope.xElement.infoJSON[c.name] = new Date(c.default);    
                                     }
                                 } else {
                                     $scope.xElement.infoJSON[c.name] = c.default;
@@ -333,22 +336,23 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                     }
                 }
             }
-        }
-        t_val = undefined;
-        if (!vok) {
-            alert(mess);
-        } else {
-            // update xElement calcNumbers from form field value - angular link not operational for calculated fields
-            // $scope.xElement.infoJSON.net = document.getElementById("<form>net").value
-            var t_t = $scope.x_o.tables.filter(function (e) { return e.ID === $scope.x_o.forms[$scope.x_form].tablesID; });
-            var t_c = t_t[0].columns;
-            for (c in t_c) {
-                if (t_c[c].calcNumber !== undefined && t_c[c].calcNumber) {
-                    $scope.xElement.infoJSON[t_c[c].name] = document.getElementById($scope.forms[$scope.x_form].name + $scope.xElement.infoJSON[t_c[c].name]).value;
+            t_val = undefined;
+            if (!vok) {
+                alert(mess);
+            } else {
+                // update xElement calcNumbers from form field value - angular link not operational for calculated fields
+                // $scope.xElement.infoJSON.net = document.getElementById("<form>net").value
+                var t_c = $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].columns;
+                for (var c in t_c) {
+                    if ($scope.x_o.columns[t_c[c]].calcNumber !== undefined && $scope.x_o.columns[t_c[c]].calcNumber) {
+                        if (eval("document.getElementById('"+$scope.x_o.forms[$scope.x_form].name + $scope.x_o.columns[t_c[c]].name+"').value") !== undefined) {
+                            eval("$scope.xElement.infoJSON[$scope.x_o.columns[t_c[c]].name] = document.getElementById('"+$scope.x_o.forms[$scope.x_form].name + $scope.x_o.columns[t_c[c]].name+"').value");
+                        }
+                    }
                 }
             }
+            return vok;
         }
-        return vok;
     };
 
     // *** login page
@@ -662,6 +666,10 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             }, function (err) {
                 alert("error 5");
             });
+    };
+
+    $scope.doc = function () {
+        alert("process doc");
     };
 
     allowDrop = function (ev) {
