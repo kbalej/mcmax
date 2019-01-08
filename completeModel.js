@@ -259,7 +259,7 @@ function start(x_o) {
                                     vhtmlEdit += "<input type='text' class='form-control' placeholder='Zoom' readonly ng-model='xElement.infoJSON." + c.name + "Zoom'>";
                                     break;
                                 case "doc":
-                                    vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' type='text' class='form-control' ng-model='xElement.infoJSON." + c.name + "' readonly > <input type='button' ng-click='doc()' value='print' >";
+                                    vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' type='text' class='form-control' ng-model='xElement.infoJSON." + c.name + "' readonly > <input type='button' class='form-control' ng-click='doc()' value='create and print' >";
                                     break;
                                 case "lookup":
                                     vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
