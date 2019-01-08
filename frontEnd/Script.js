@@ -669,7 +669,57 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     $scope.doc = function () {
-        alert("process doc");
+        var d_m = {};
+        d_m.m=[];
+        d_m.i=[];
+        d_m.r=[];
+        var d_masterVal = $scope.xElement.ID;
+        if(d_masterVal == "") {alert("save first !"); return;}r
+        var d_masterID = $scope.x_o.forms[$scope.x_form].tablesID;
+        var d_masterName = $scope.x_o.forms[$scope.x_form].tablesName;
+        var d_childID = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesID;
+        var d_childName = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
+        var d_combine = false;
+        if($scope.x_o.tables[d_masterID].parent === undefined || $scope.x_o.tables[d_masterID].parent === "") { 
+            if( confirm("link orphaned children ?")) { d_combine = true; }   // only for newly created invoices 
+        } 
+        var d_masterFields = $scope.x_o.forms[$scope.x_form].fieldsJSON;
+        var d_masterLookups = $scope.x_o.forms[$scope.x_form].fieldsLookup;
+        var d_childFields = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].fieldsJSON;
+
+        var x = d_masterFields.split(",");
+        if (typeof x !== undefined && x !== null) {
+            for (var v in x) { d_m.m.push(x[v]); }
+        }
+        x = d_childFields.split(",");
+        if (typeof x !== undefined && x !== null) {
+            for (v in x) { d_m.i.push(x[v]); }
+        }
+        x = d_masterLookups.split(",");
+        if (typeof x !== undefined && x !== null) {
+            for (v in x) { 
+                var lu = x[v].substring(0,x[v].length - 2);
+                var luj = $scope.x_o.forms[lu].fieldsJSON;
+                d_m[lu]=[];
+                var xx = luj.split(",");
+                if (typeof xx !== undefined && xx !== null) {
+                    for (var vv in xx) { d_m[lu].push(xx[vv]);d_m.r.push(lu + "." + xx[vv]); }
+                }
+            }
+        }
+        var d_id = [];  // shared ref keys master - child
+        var x1 = d_masterLookups.split(",");
+        var x2 = d_childFields.split(",");
+        for (var v1 in x1){
+            for (var v2 in x2){
+                if(x1[v1] === x2[v2]){ d_id.push(x1[v1]); }
+            }
+        }
+        d_m.m.sort();
+        d_m.i.sort();
+        d_m.r.sort();
+        d_id.sort();
+        alert(JSON.stringify(d_id));
     };
 
     allowDrop = function (ev) {
