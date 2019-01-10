@@ -673,12 +673,14 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         d_m.m=[];
         d_m.i=[];
         d_m.r=[];
+        d_m.sql=""; 
         var d_masterVal = $scope.xElement.ID;
-        if(d_masterVal == "") {alert("save first !"); return;}r
+        if(d_masterVal == "") {alert("save first !"); return;}
         var d_masterID = $scope.x_o.forms[$scope.x_form].tablesID;
         var d_masterName = $scope.x_o.forms[$scope.x_form].tablesName;
         var d_childID = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesID;
         var d_childName = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
+        d_m.sql += "SELECT * FROM VS_" + d_childName + " WHERE masterID = '" + d_masterVal + "' for json path;"
         var d_combine = false;
         if($scope.x_o.tables[d_masterID].parent === undefined || $scope.x_o.tables[d_masterID].parent === "") { 
             if( confirm("link orphaned children ?")) { d_combine = true; }   // only for newly created invoices 
@@ -699,11 +701,11 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         if (typeof x !== undefined && x !== null) {
             for (v in x) { 
                 var lu = x[v].substring(0,x[v].length - 2);
+                d_m.sql += "SELECT * FROM VS_" + lu + " WHERE " + lu + "ID = '" + $scope.xElement.infoJSON[x[v]] + "' for json path;"
                 var luj = $scope.x_o.forms[lu].fieldsJSON;
-                d_m[lu]=[];
                 var xx = luj.split(",");
                 if (typeof xx !== undefined && xx !== null) {
-                    for (var vv in xx) { d_m[lu].push(xx[vv]);d_m.r.push(lu + "." + xx[vv]); }
+                    for (var vv in xx) { d_m.r.push(lu + "." + xx[vv]); }
                 }
             }
         }
@@ -719,7 +721,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         d_m.i.sort();
         d_m.r.sort();
         d_id.sort();
-        alert(JSON.stringify(d_id));
+        alert(d_m.sql);
     };
 
     allowDrop = function (ev) {
