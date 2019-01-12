@@ -30,6 +30,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
         };
     var rv = "OK";
     var vrows = "";
+    var vmax = [];
     var connection = new Connection(config);
     connection.on('connect', function (err) {
         if (err) {
@@ -92,7 +93,51 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     });
                     connection.execSql(request0);
                     return;
-                case "KB_n_getAll":
+                case "KB_getAuto":
+                    var vtable = querystring.module + "_" + querystring.table;
+                    var vsq = "";
+                    x =  postData.split(",");
+                    if (x !== undefined && x !== null) {
+                        for (v in x) {
+                            vsq += "SELECT max(CAST(JSON_VALUE(infoJSON,'$." + x[v] + "') AS int)) FROM " + vtable + ";";
+                        }
+                    } else {
+                        response.writeHead(300, { "Content-Type": "text/plain" });
+                        response.write("no max columns");
+                        response.end();
+                        connection.close();
+                    }
+                    request9 = new Request(vsq, function (err, rowCount, rows) {
+                        if (err) {
+                            rv = JSON.stringify(err);
+                            response.writeHead(300, { "Content-Type": "text/plain" });
+                            response.write(rv);
+                            response.end();
+                            connection.close();
+                        }
+                    });
+                    request9.on('row', function (rows) {
+                        vmax.push(rows[0].value);
+                    });
+                    request9.on('requestCompleted', function () {
+                        response.writeHead(200, { "Content-Type": "text/plain" });
+                        response.write(vmax);
+                        response.end();
+                        connection.close();
+                    });
+                    connection.execSql(request9);
+                    return;
+                case "KB_x_doc": 
+                    var d_m = JSON.parse(postData);
+                    if(d_m.htmlDoc === undefined || d_m.htmlDoc === ""){
+
+                    }
+                    response.writeHead(300, { "Content-Type": "text/plain" });
+                    response.write("");
+                    response.end();
+                    connection.close();   // doc name
+                    return;
+        case "KB_n_getAll":
                     var vtable = querystring.module + "_" + querystring.table;
                     var vob;
                     if (querystring.orderBy == 'sequence') {
@@ -101,7 +146,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         vob = "JSON_VALUE(infoJSON, '$." + querystring.orderBy + "')";
                         if (querystring.orderBy == "date") { vob += " DESC "; }
                     }
-                    var vw = " 1 = 1 ";
+                    var vw = true;
                     if (querystring.masterID !== undefined && querystring.masterID !== "") { vw = " masterID = '" + querystring.masterID + "' " } else { vw = " masterID = '' "}
                     var vv = JSON.parse(postData).sql;
                     if (vv !== "") {

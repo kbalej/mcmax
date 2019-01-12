@@ -13,4 +13,6 @@ handle["/KB_x_getAll"] = requestHandlers.KB_x_getAll;
 handle["/KB_x_addUpdate"] = requestHandlers.KB_x_addUpdate;
 handle["/KB_x_delete"] = requestHandlers.KB_x_delete;
 handle["/KB_x_sequencePut"] = requestHandlers.KB_x_sequencePut;
+handle["/KB_x_getAuto"] = requestHandlers.KB_x_getAuto;
+handle["/KB_x_doc"] = requestHandlers.KB_x_doc;
 server.start(router.route, handle,dbh);

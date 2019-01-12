@@ -26,6 +26,7 @@ function start(x_o) {
     for (var f in x_o.forms) {
         var vFieldsJSON = "";
         var vFieldsDate = "";
+        var vFieldsAuto = "";
         var vFieldsCheckbox = "";
         var vFieldsMap = "";
         var vFieldsLookup = ""; // field names,
@@ -227,6 +228,7 @@ function start(x_o) {
                                 case "number":  // input type number does not display value, replaced by text
                                     if(c.autoNumber || c.calcNumber) {   // readonly
                                         vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' readonly >";
+                                        if (c.autoNumber && !vFieldsAuto.includes(c.name)) { vFieldsAuto += c.name + ","; }
                                     }else {
                                         vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
                                     }
@@ -259,7 +261,7 @@ function start(x_o) {
                                     vhtmlEdit += "<input type='text' class='form-control' placeholder='Zoom' readonly ng-model='xElement.infoJSON." + c.name + "Zoom'>";
                                     break;
                                 case "doc":
-                                    vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' type='text' class='form-control' ng-model='xElement.infoJSON." + c.name + "' readonly > <input type='button' class='form-control' ng-click='doc()' value='create and print' >";
+                                    vhtmlEdit += "<a href='http://www.verbierservices.net/docs/{{item.infoJSON." + c.name + "}}' target='_blank'>{{item.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='item.infoJSON." + c.name + "' class='form-control' ng-click='doc('" + c.name + "') value='create doc' >";
                                     break;
                                 case "lookup":
                                     vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
@@ -314,6 +316,7 @@ function start(x_o) {
             }
         }
         x_o.forms[f].fieldsDate = removeTrailingComma(vFieldsDate);
+        x_o.forms[f].fieldsAuto = removeTrailingComma(vFieldsAuto);
         x_o.forms[f].fieldsCheckbox = removeTrailingComma(vFieldsCheckbox);
         x_o.forms[f].fieldsMap = removeTrailingComma(vFieldsMap);
         x_o.forms[f].fieldsLookup = removeTrailingComma(vFieldsLookup);

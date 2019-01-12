@@ -27,6 +27,14 @@ function KB_x_sequencePut(response, postData, pathname, querystring, request, db
     console.log("Request handler 'KB_x_sequencePut' was called.");
     dbh.start("KB_x_sequencePut", response, postData, querystring);
 }
+function KB_x_getAuto(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_x_getAuto' was called.");
+    dbh.start("KB_x_getAuto", response, postData, querystring);
+}
+function KB_x_doc(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_x_doc' was called.");
+    //dbh.start("KB_x_doc", response, postData, querystring);
+}
 function upload(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'upload' was called.");
     var form = new formidable.IncomingForm();
