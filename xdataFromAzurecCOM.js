@@ -21,7 +21,7 @@ connection.on('connect', function (err) {
     MongoClient.connect(url, { useNewUrlParser: true }, function (err, con) {
         db = con.db("VS");
         var b = "";
-        var request = new Request("SELECT noContactMoyenCommunication ID,noCustomer masterID,c.description name, b.Numero number,b.description FROM VS_Customers a INNER JOIN CRM_Contact_MoyenCommunication b ON a.noContact = b.noContact LEFT JOIN CRM_MoyenCommunication c ON b.noMoyenCommunication = c.noMoyenCommunication FOR JSON PATH", function (err, rowCount, rows) { });
+        var request = new Request("SELECT noContactMoyenCommunication ID,noCustomer masterID,c.description name, b.Numero number,b.description FROM VS_Customers a INNER JOIN CRM_Contact_MoyenCommunication b ON a.noContact = b.noContact LEFT JOIN CRM_MoyenCommunication c ON b.noMoyenCommunication = c.noMoyenCommunication WHERE a.DD is null and b.DD is null FOR JSON PATH", function (err, rowCount, rows) { });
         request.on('row', function (rows) {
             b = b + rows[0].value;
         });

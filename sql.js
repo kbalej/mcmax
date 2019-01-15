@@ -2,12 +2,31 @@
 var Request = require('tedious').Request;
 var TYPES = require('tedious').TYPES;
 var buildModel = require("./buildModel");
+var fs = require('fs');
+
+var rem = function(v){
+    v.replace("}][{", "}],[{");
+    if(v.includes("}][{")) {rem(v);}
+    return v;
+};
 
 var cvt = function (result) {
     var o = [];
     for (var x in result) {
         try {
             result[x].infoJSON = JSON.parse(result[x].infoJSON);
+        } catch (e) {
+            console.log(result[x].infoJSON + "  xxxxxxxxxxxxxx " + x);
+        }
+        o.push(result[x]);
+    }
+    return o;
+};
+var cvt1 = function (result) {
+    var o = [];
+    for (var x in result) {
+        try {
+            result[x] = JSON.parse(result[x].infoJSON);
         } catch (e) {
             console.log(result[x].infoJSON + "  xxxxxxxxxxxxxx " + x);
         }
@@ -71,14 +90,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     });
                     request0.on('requestCompleted', function () {
                         //console.log("requestCompleted request0");
-                        var t = vrows.replace("}][{", "}],[{");
-                        t = t.replace("}][{", "}],[{");
-                        t = t.replace("}][{", "}],[{");
-                        t = t.replace("}][{", "}],[{");
-                        t = t.replace("}][{", "}],[{");
-                        t = t.replace("}][{", "}],[{");
-                        t = "[" + t.replace("}][{", "}],[{") + "]";
-                        var tt = JSON.parse(t);
+                        var tt = JSON.parse("[" + rem(vrows) + "]");
                         for (x in tt) {
                             tt[x] = cvt(tt[x]);
                         }
@@ -109,9 +121,8 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     }
                     request9 = new Request(vsq, function (err, rowCount, rows) {
                         if (err) {
-                            rv = JSON.stringify(err);
                             response.writeHead(300, { "Content-Type": "text/plain" });
-                            response.write(rv);
+                            response.write(JSON.stringify(err));
                             response.end();
                             connection.close();
                         }
@@ -128,16 +139,70 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     connection.execSql(request9);
                     return;
                 case "KB_x_doc": 
-                    var d_m = JSON.parse(postData);
-                    if(d_m.htmlDoc === undefined || d_m.htmlDoc === ""){
-
-                    }
-                    response.writeHead(300, { "Content-Type": "text/plain" });
-                    response.write("");
-                    response.end();
-                    connection.close();   // doc name
+                    var o = JSON.parse(postData);
+                    var r = "";
+                    // execute sql 
+                    request8 = new Request(o.sql, function (err, rowCount, rows) {
+                        if (err) {
+                            response.writeHead(300, { "Content-Type": "text/plain" });
+                            response.write(JSON.stringify(err));
+                            response.end();
+                            connection.close();
+                        }
+                    });
+                    request8.on('row', function (rows) {
+                        r += rows[0].value;
+                    });
+                    request8.on('requestCompleted', function () {
+                        // create data model
+                        var om = {};
+                        om.m = o.xMaster;
+                        om.r = {};
+                        var tt = JSON.parse("[" + rem(r) + "]");
+                        var p = 0;
+                        if (o.conine) {p = 1}
+                        om.i = cvt1(tt[p]);  // []
+                        om.ih = {};
+                        om.if = {};
+                        var ct=0,ct1=0;
+                        for (x in tt) {
+                            ct=ct+1;
+                            if (ct > p) {
+                                om.r[o.sqlS[ct1]]=cvt1(tt[x]);
+                                ct1+=1;
+                            }
+                        }
+                        // update KB_forms html - without model
+                        request7 = new Request("UPDATE KB_forms SET htmlDoc = " + o.htmlDoc + " where formsID = '" + o.formID + "';", function (err, rowCount, rows) {
+                            if (err) {
+                                response.writeHead(300, { "Content-Type": "text/plain" });
+                                response.write(JSON.stringify(err));
+                                response.end();
+                                connection.close();
+                            } else { 
+                                // complete file
+                                o.htmlDoc= v.replace("//model//", JSON.stringify(om));
+                                // send file
+                                fs.writeFile(_dirname + "/doc/" + o.form + o.masterID + ".html",o.htmlDoc,function(err) {
+                                    if(err) {
+                                        response.writeHead(300, { "Content-Type": "text/plain" });
+                                        response.write(JSON.stringify(err));
+                                        response.end();
+                                        connection.close();   // doc name
+                                    } else {
+                                        response.writeHead(200, { "Content-Type": "text/plain" });
+                                        response.write(o.form + o.masterID);
+                                        response.end();
+                                        connection.close();   // doc name
+                                    }
+                                });
+                            }
+                        });
+                        connection.execSql(request7);
+                    });
+                    connection.execSql(request8);
                     return;
-        case "KB_n_getAll":
+                case "KB_n_getAll":
                     var vtable = querystring.module + "_" + querystring.table;
                     var vob;
                     if (querystring.orderBy == 'sequence') {
