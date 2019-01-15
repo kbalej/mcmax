@@ -21,7 +21,7 @@ connection.on('connect', function (err) {
     MongoClient.connect(url, { useNewUrlParser: true }, function (err, con) {
         db = con.db("VS");
         var b = "";
-        var request = new Request("SELECT noCustomer ID, a.description name, ABC, prixHeure, minHW, maxHW, avHW, DateLastSale, TotalSalesInvoiced, b.description, b.ADL1, b.ADL2,b.ADL3,b.ADL4,b.ADL5 FROM VS_Customers a LEFT JOIN CRM_Contact_ADL b ON a.noContact = b.noContact AND ParDefaut <> 0 AND a.description <> 'Demole' AND a.description <> 'Green' AND a.description NOT LIKE 'Tierc' AND NOT ADL1 IS NULL FOR JSON PATH", function (err, rowCount, rows) { });
+        var request = new Request("SELECT noCustomer ID, a.description name, ABC, prixHeure, minHW, maxHW, avHW, DateLastSale, TotalSalesInvoiced, b.description, b.ADL1, b.ADL2,b.ADL3,b.ADL4,b.ADL5 FROM VS_Customers a LEFT JOIN CRM_Contact_ADL b ON a.noContact = b.noContact AND ParDefaut <> 0 AND a.description <> 'Demole' AND a.description <> 'Green' AND a.description NOT LIKE 'Tierc' AND NOT ADL1 IS NULL AND a.DD is null FOR JSON PATH", function (err, rowCount, rows) { });
         request.on('row', function (rows) {
             b = b + rows[0].value;
         });

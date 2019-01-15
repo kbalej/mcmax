@@ -21,7 +21,7 @@ connection.on('connect', function (err) {
     MongoClient.connect(url, { useNewUrlParser: true }, function (err, con) {
         db = con.db("VS");
         var b = "";
-        var request = new Request("SELECT a.noInvoice ID, a.noBrand brandsID, b.name brandsName, a.noCustomer custID, c.description custName, a.description name, a.iNumber, a.Date date, a.paymentComplete paid FROM VS_Invoice a LEFT JOIN VS_Brand b on a.noBrand = b.noBrand LEFT JOIN VS_Customers c on a.noCustomer = c.noCustomer FOR JSON PATH", function (err, rowCount, rows) { });
+        var request = new Request("SELECT a.noInvoice ID, a.noBrand brandsID, b.name brandsName, a.noCustomer custID, c.description custName, a.description name, a.iNumber, a.Date date, a.paymentComplete paid FROM VS_Invoice a LEFT JOIN VS_Brand b on a.noBrand = b.noBrand LEFT JOIN VS_Customers c on a.noCustomer = c.noCustomer WHERE a.DD is null FOR JSON PATH", function (err, rowCount, rows) { });
         request.on('row', function (rows) {
             b = b + rows[0].value;
         });

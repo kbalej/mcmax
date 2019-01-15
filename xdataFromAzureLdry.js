@@ -21,7 +21,7 @@ connection.on('connect', function (err) {
     MongoClient.connect(url, { useNewUrlParser: true }, function (err, con) {
         db = con.db("VS");
         var b = "";
-        var request = new Request("SELECT noLaundryItem ID,noLaundryItemRef parentID,tri sequence,displayLeft name,cost FROM VS_LaundryItem order by tri FOR JSON PATH", function (err, rowCount, rows) { });
+        var request = new Request("SELECT noLaundryItem ID,noLaundryItemRef parentID,tri sequence,displayLeft name,cost FROM VS_LaundryItem WHERE DD is null order by tri FOR JSON PATH", function (err, rowCount, rows) { });
         request.on('row', function (rows) {
             b = b + rows[0].value;
         });
