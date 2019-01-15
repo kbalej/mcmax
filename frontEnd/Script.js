@@ -3,7 +3,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     //$scope.x_o//
     $scope.sloc="http://172.22.22.64:8888/"; // node on Max Server
-    $scope.floc="file:///home/kb/Documents/p/UploadedFiles/";
+    $scope.floc=__dirname + "/UploadedFiles/";
     //$scope.sloc="http://localhost:8888/";  // node on Asus
     //$scope.floc="file:///Users/Admin/Onedrive/p_A/UploadedFiles/";
     // build load function
@@ -695,14 +695,24 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         d_m.m=[];
         d_m.i=[];
         d_m.r=[];
+        d_m.xMaster=$scope.xElement.infoJSON;
         d_m.sql=""; 
+        d_m.sqlS=[]; // sequence of ref tables read from db server
+        d_m.form=$scope.x_form;
+        d_m.formID=$scope.x_o.forms[$scope.x_form]._ID; // for update of htmlDoc
         var d_masterVal = $scope.xElement.ID;
         if(d_masterVal == "") {alert("save first !"); return;}
         var d_masterID = $scope.x_o.forms[$scope.x_form].tablesID;
+        d_m.masterID = d_masterVal;
         var d_masterName = $scope.x_o.forms[$scope.x_form].tablesName;
         var d_childID = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesID;
         var d_childName = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
-        d_m.sql += "SELECT * FROM VS_" + d_childName + " WHERE masterID = '" + d_masterVal + "' for json path;"
+        // order by 
+        if ($scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].orderBy === 'sequence'){
+            d_m.sql += "SELECT * FROM VS_" + d_childName + " WHERE masterID = '" + d_masterVal + "' ORDER BY sequence for json path;";
+        } else {
+            d_m.sql += "SELECT * FROM VS_" + d_childName + " WHERE masterID = '" + d_masterVal + "' ORDER BY JSON_VALUE(infoJSON.'$." + $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].orderBy + "') for json path;";
+        }
         var d_combine = false;
         if($scope.x_o.tables[d_masterID].parent === undefined || $scope.x_o.tables[d_masterID].parent === "") { 
             if( confirm("link orphaned children ?")) { d_combine = true; }   // only for newly created invoices 
@@ -712,26 +722,28 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         var d_childFields = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].fieldsJSON;
 
         var x = d_masterFields.split(",");
-        if (typeof x !== undefined && x !== null) {
+        if (x !== undefined && x !== []) {
             for (var v in x) { d_m.m.push(x[v]); }
         }
         x = d_childFields.split(",");
-        if (typeof x !== undefined && x !== null) {
+        if (x !== undefined && x !== []) {
             for (v in x) { d_m.i.push(x[v]); }
         }
         x = d_masterLookups.split(",");
-        if (typeof x !== undefined && x !== null) {
+        if ( x !== undefined && x !==  []){
             for (v in x) { 
                 var lu = x[v].substring(0,x[v].length - 2);
-                d_m.sql += "SELECT * FROM VS_" + lu + " WHERE " + lu + "ID = '" + $scope.xElement.infoJSON[x[v]] + "' for json path;"
-                var luj = $scope.x_o.forms[lu].fieldsJSON;
-                var xx = luj.split(",");
-                if (typeof xx !== undefined && xx !== null) {
-                    for (var vv in xx) { d_m.r.push(lu + "." + xx[vv]); }
+                d_m.sqlS.push(lu);
+                d_m.sql += "SELECT * FROM VS_" + lu + " WHERE " + lu + "ID = '" + $scope.xElement.infoJSON[x[v]] + "' for json path;";
+                var xx = $scope.x_o.forms[lu].fieldsJSON.split(",");
+                d_m.r[lu]=[];
+                if (xx !== undefined && xx !== []) {
+                    for (var vv in xx) { d_m.r[lu].push(xx[vv]); }
                 }
+                d_m.r[lu].sort();
             }
         }
-        var d_id = [];  // shared ref keys master - child
+        var d_id = [];  // shared ref keys master - child for filter 'combine' with no masterID
         var x1 = d_masterLookups.split(",");
         var x2 = d_childFields.split(",");
         for (var v1 in x1){
@@ -739,21 +751,27 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                 if(x1[v1] === x2[v2]){ d_id.push(x1[v1]); }
             }
         }
+        if(d_combine) {
+            var s = "update " + $scope.x_o.name + "_" + $scope.x_o.forms[$scope.x_form].tablesName + " set masterID = '" + d_masterVal + "' where masterID='"+d_masterVal+"'";
+            for (var v in d_id){
+                s += " and JSON_VALUE(infoJSON,'$." + d.id[v] + "')='" + $scope.xElement.infoJSON[d.id[v]] + "'";
+                }
+            }
+            d_m.sql = s + ";" + d_m.sql;
+        }
+        d_m.combine = d_combine;
         d_m.m.sort();
         d_m.i.sort();
-        d_m.r.sort();
-        d_id.sort();
-        d_m.htmlDoc=$scope.x_o.forms[$scope.x_form].htmlDoc;
-        d_m.form=$scope.x_form;
-        alert(d_m.sql);
+        if ($scope.x_o.forms[$scope.x_form].htmlDoc === undefined) {d_m.htmlDoc="";} else {d_m.htmlDoc=$scope.x_o.forms[$scope.x_form].htmlDoc;}
         $http.post($scope.sloc + 'KB_x_doc?module=' + $scope.x_o.name, JSON.stringify(d_m)).then
             (function (response) {
                 $scope.xElement.infoJSON[pfield] = response.data; // eg inv1111-2222-3333
+                $scope.xSave();
             }, function (err) {
                 alert("error doc " + JSON.stringify(err));
             }
         );
-    };
+    });
 
     allowDrop = function (ev) {
         ev.preventDefault();
