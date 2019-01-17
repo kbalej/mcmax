@@ -3,12 +3,7 @@ var Request = require('tedious').Request;
 var TYPES = require('tedious').TYPES;
 var buildModel = require("./buildModel");
 var fs = require('fs');
-
-var rem = function(v){
-    v.replace("}][{", "}],[{");
-    if(v.includes("}][{")) {rem(v);}
-    return v;
-};
+var sss = require('./sss');
 
 var cvt = function (result) {
     var o = [];
@@ -34,29 +29,16 @@ var cvt1 = function (result) {
     }
     return o;
 };
-
 function start(storedProcedure, response, postData, querystring, callback) {
-    var config =
-        {
-            userName: 'max',
-            password: 'Bobby123___',
-            server: 'maxentreprises.database.windows.net',
-            options:
-                {
-                    database: 'maxentreprises'
-                    , encrypt: true
-                }
-        };
+    var config = sss.start().sql;
     var rv = "OK";
     var vrows = "";
     var vmax = [];
     var connection = new Connection(config);
     connection.on('connect', function (err) {
         if (err) {
-            console.log(err);
-            rv = err;
             response.writeHead(300, { "Content-Type": "text/plain" });
-            response.write(rv);
+            response.write(stringify(err));
             response.end();
             connection.close();
         } else {
@@ -64,21 +46,18 @@ function start(storedProcedure, response, postData, querystring, callback) {
             var request = new Request(storedProcedure,
                 function (err) {
                     if (err) {
-                        console.log(err);
-                        rv = err;
                         response.writeHead(300, { "Content-Type": "text/plain" });
-                        response.write(rv);
+                        response.write(stringify(err));
                         response.end();
+                        connection.close();
                     }
-                    //console.log("end request");
                 });
             switch (storedProcedure) {
                 case "KB_buildModel":
                     request0 = new Request("SELECT * FROM KB_modules FOR JSON PATH; SELECT * FROM KB_forms ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_pages ORDER BY sequence FOR JSON PATH;	SELECT * FROM KB_fields ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_tables FOR JSON PATH; SELECT * FROM KB_columns FOR JSON PATH;", function (err, rowCount, rows) {
                         if (err) {
-                            rv = JSON.stringify(err);
                             response.writeHead(300, { "Content-Type": "text/plain" });
-                            response.write(rv);
+                            response.write(JSON.stringify(err));
                             response.end();
                             connection.close();
                         }
@@ -89,8 +68,14 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         vrows += rows[0].value;
                     });
                     request0.on('requestCompleted', function () {
-                        //console.log("requestCompleted request0");
-                        var tt = JSON.parse("[" + rem(vrows) + "]");
+                        var t = vrows.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = "[" + t.replace("}][{", "}],[{") + "]";
+                        var tt = JSON.parse(t);
                         for (x in tt) {
                             tt[x] = cvt(tt[x]);
                         }
@@ -158,12 +143,26 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         var om = {};
                         om.m = o.xMaster;
                         om.r = {};
-                        var tt = JSON.parse("[" + rem(r) + "]");
+                        var t = r.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = "[" + t.replace("}][{", "}],[{") + "]";
+                        var tt = JSON.parse(t);
                         var p = 0;
-                        if (o.conine) {p = 1}
+                        if (o.combine) {p = 1}
                         om.i = cvt1(tt[p]);  // []
-                        om.ih = {};
                         om.if = {};
+                        // calc footer totals for each total column, eg om.if.cost:calc value
+                        for (var t in o.childTotalFields.split(",")) {
+                            var tt = 0;
+                            for (var v in om.i){
+                                if(om.i[v] !== undefined) {tt+=om.i[v];}
+                            }
+                            om.if[t] = tt;
+                        }
                         var ct=0,ct1=0;
                         for (x in tt) {
                             ct=ct+1;
@@ -172,7 +171,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                                 ct1+=1;
                             }
                         }
-                        // update KB_forms html - without model
+                        // update KB_forms html - without model data
                         request7 = new Request("UPDATE KB_forms SET htmlDoc = " + o.htmlDoc + " where formsID = '" + o.formID + "';", function (err, rowCount, rows) {
                             if (err) {
                                 response.writeHead(300, { "Content-Type": "text/plain" });
@@ -180,20 +179,19 @@ function start(storedProcedure, response, postData, querystring, callback) {
                                 response.end();
                                 connection.close();
                             } else { 
-                                // complete file
+                                // complete and write final html 
                                 o.htmlDoc= v.replace("//model//", JSON.stringify(om));
-                                // send file
                                 fs.writeFile(_dirname + "/doc/" + o.form + o.masterID + ".html",o.htmlDoc,function(err) {
                                     if(err) {
                                         response.writeHead(300, { "Content-Type": "text/plain" });
                                         response.write(JSON.stringify(err));
                                         response.end();
-                                        connection.close();   // doc name
+                                        connection.close();   
                                     } else {
                                         response.writeHead(200, { "Content-Type": "text/plain" });
-                                        response.write(o.form + o.masterID);
+                                        response.write(o.form + o.masterID); // doc name
                                         response.end();
-                                        connection.close();   // doc name
+                                        connection.close();  
                                     }
                                 });
                             }
@@ -204,12 +202,19 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     return;
                 case "KB_n_getAll":
                     var vtable = querystring.module + "_" + querystring.table;
-                    var vob;
-                    if (querystring.orderBy == 'sequence') {
-                        vob = 'sequence';
-                    } else {
-                        vob = "JSON_VALUE(infoJSON, '$." + querystring.orderBy + "')";
-                        if (querystring.orderBy == "date") { vob += " DESC "; }
+                    var vob = "";
+                    var x = querystring.orderBy.split(",");
+                    for (v in x) {
+                        if( vob !== "" ) { vob += " , ";}
+                        var xx = x[v].split(":")
+                        if(xx[0] === "sequence"){
+                            vob += " " + xx[0];
+                        } else {
+                            vob += " JSON_VALUE(infoJSON, '$." + xx[0] + "')";
+                        }
+                        if(xx[1] === "D"){
+                            vob += " DESC ";
+                        }
                     }
                     var vw = true;
                     if (querystring.masterID !== undefined && querystring.masterID !== "") { vw = " masterID = '" + querystring.masterID + "' " } else { vw = " masterID = '' "}
@@ -218,7 +223,6 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         vw += " AND " + vv;
                     }
                     var vsql = "SELECT count(*) RC FROM " + vtable + " WHERE " + vw + " FOR JSON PATH;SELECT * FROM " + vtable + " WHERE " + vw + " ORDER BY " + vob + " OFFSET " + (querystring.pageCt - 1) * querystring.rowsPage + " ROWS FETCH NEXT " + querystring.rowsPage + " ROWS ONLY FOR JSON PATH;";
-                    //console.log(vsql);
                     var request1 = new Request(vsql, function (err, rowCount, rows) {
                         if (err) {
                             rv = JSON.stringify(err);
@@ -227,27 +231,21 @@ function start(storedProcedure, response, postData, querystring, callback) {
                             response.end();
                             connection.close();
                         }
-                        //console.log("end request1");
                     });
                     vrows = "";
                     request1.on('row', function (rows) {
-                        //console.log("row request1");
                         vrows += rows[0].value;
                     });
                     request1.on('requestCompleted', function () {
-                        //console.log("requestCompleted request1");
                         var t = "[" + vrows.replace("}][{", "}],[{") + "]";
                         if (t === "[]") {
-                            //console.log("[]");
                             return;
                         }
                         var tt = JSON.parse(t);
-                        //console.log(JSON.stringify(tt));
                         var ttt = {};
                         ttt.rowCount = tt[0][0].RC;
                         ttt.rv = cvt(tt[1]);
                         ttt.table = querystring.table;
-                        //console.log(JSON.stringify(ttt));
                         connection.close();
                         response.writeHead(200, { "Content-Type": "text/plain" });
                         response.write(JSON.stringify(ttt));
@@ -266,6 +264,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     request.addParameter('module', TYPES.NVarChar, querystring.module, { length: 10 });
                     request.addParameter('tableP', TYPES.NVarChar, querystring.table, { length: 100 });
                     request.addParameter('ID', TYPES.NVarChar, querystring.ID, { length: 50 });
+                    request.addParameter('subtable', TYPES.NVarChar, querystring.subtable, { length: 100 });
                     break;
                 case "KB_n_sequencePut":
                     request.addParameter('module', TYPES.NVarChar, querystring.module, { length: 10 });

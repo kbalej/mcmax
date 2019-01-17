@@ -1,6 +1,7 @@
 ﻿var MongoClient = require('mongodb').MongoClient;
 var buildModel = require("./buildModel");
 var uuid = require('uuid');
+var sss = require('./sss');
 
 function start(storedProcedure, response, postData, querystring, callback) {
     var updateRecursive = function (dbo, tab, s, arr, response) {
@@ -25,7 +26,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
         response.write(rv);
         response.end();
     };
-    var url = "mongodb://localhost:27017/";
+    var url = sss.start().mongo;
     MongoClient.connect(url, { useNewUrlParser: true }, function (err, con) {
         if (err) {
             errorReturn("Cannot connect to mongo");
@@ -81,8 +82,23 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     });
                     break;
                 case "KB_x_getAll":
-                    var ob = "sequence";
-                    if (querystring.orderBy === 'sequence') { ob = querystring.orderBy; } else { ob = 'infoJSON.' + querystring.orderBy; }
+                    var mysort = {};
+                    var x = querystring.orderBy.split(",");
+                    for (v in x) {
+                        var ob = "";
+                        var xx = x[v].split(":");
+                        if(xx[0] === "sequence"){
+                            ob = xx[0];
+                        } else {
+                            ob = "infoJSON." + xx[0] + "')";
+                        }
+                        mysort.push(ob);
+                        if(xx[1] === "D"){
+                            mysort[ob] = 1;                    
+                        } else {
+                            mysort[ob] = 0;
+                        }
+                    }
                     var query = {};
                     var v = JSON.parse(postData).params;
                     if (v !== undefined && v !== '' && v !== '""') {
@@ -136,25 +152,21 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     }
                     query.masterID = '';
                     if (querystring.masterID !== undefined && querystring.masterID !== null) { query.masterID = querystring.masterID; }
-                    var rc = 0;
-                    dbo.collection(querystring.table).find(query).toArray(function (err, result) {
-                        if (result !== undefined && result !== null && result !== []) { rc = result.length; } else { rc = 0; }
-                    });
-                    var myskip = (querystring.pageCt - 1) * querystring.rowsPage;
-                    var mylimit = querystring.rowsPage * 1;
-                    var mysort = {};
-                    var asc = 1;
-                    mysort[ob] = asc;
-                    dbo.collection(querystring.table).find(query).sort(mysort).skip(myskip).limit(mylimit).toArray(function (err, result) {
-                        var t = {};
-                        t.rowCount = rc;
-                        t.rv = result;
-                        t.table = querystring.table;
-                        response.writeHead(200, { "Content-Type": "text/plain" });
-                        response.write(JSON.stringify(t));
-                        response.end();
-                        con.close;
-                    });
+                    dbo.collection(querystring.table).countDocuments(query,function(err,count){
+                        var rc = count;
+                        var myskip = (querystring.pageCt - 1) * querystring.rowsPage;
+                        var mylimit = querystring.rowsPage * 1;
+                        dbo.collection(querystring.table).find(query).sort(mysort).skip(myskip).limit(mylimit).toArray(function (err, result) {
+                            var t = {};
+                            t.rowCount = rc;
+                            t.rv = result;
+                            t.table = querystring.table;
+                            response.writeHead(200, { "Content-Type": "text/plain" });
+                            response.write(JSON.stringify(t));
+                            response.end();
+                            con.close;
+                        });
+                    });                    
                     break;
                 case "KB_x_addUpdate":
                     if (querystring.masterID !== undefined && querystring.masterID !== null) { masterID = querystring.masterID; } else { masterID = ''; }

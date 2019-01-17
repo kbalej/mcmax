@@ -48,7 +48,7 @@ function KB_x_doc(response, postData, pathname, querystring, request, dbh) {
         for (v in d_m.i){
             vheader += "<th>" + d_m.i[v] + "</th>\r\n";
             vbody += "<td>{{dm.i." + d_m.i[v] + "}}</td>\r\n";
-            vfooter += "<td>{{dm.s." + d_m.i[v] + "}}</td>\r\n";
+            vfooter += "<td>{{dm.if." + d_m.i[v] + "}}</td>\r\n";
         }
         fs.readFile(__dirname + "doc/doc.html", function(err,data) {
             var v = data;

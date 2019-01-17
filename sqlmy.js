@@ -1,6 +1,7 @@
 var mysql = require('mysql');
 var buildModel = require("./buildModel");
 var uuid = require('uuid');
+var sss = require('./sss');
 
 function start(storedProcedure, response, postData, querystring, callback) {
     var updateRecursive = function (con, tab, s, arr, response) {
@@ -21,13 +22,15 @@ function start(storedProcedure, response, postData, querystring, callback) {
         response.write(rv);
         response.end();
     };
-    var vdb = querystring.module;
-    var con = mysql.createConnection({
-        host: "verbier1.mysql.db.hostpoint.ch",
-        database: "verbier1_" + vdb,
-        user: "verbier1_mcmax",
-        password: "GnrbgWFE"
-    });
+
+    var vdb = sss.start().mysql;
+    if (storedProcedure === "KB_buildModel") {
+        vdb.database += "KB";
+    } else {
+        vdb.database += querystring.module; 
+    }
+    var con = mysql.createConnection(vdb);
+    
     var cvt = function (result) {
         var o = [];
         for (var x in result) {
@@ -40,9 +43,6 @@ function start(storedProcedure, response, postData, querystring, callback) {
         }
         return o;
     };
-    if (storedProcedure === "KB_buildModel") {
-        vdb = "KB";
-    }
     con.connect(function (err) {
         if (err) {
             errorReturn("Cannot connect to mysql");
@@ -92,14 +92,19 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     });
                     break;
                 case "KB_x_getAll":
-                    var ob = ' sequence ';
-                    switch (querystring.orderBy) {
-                        case 'name':
-                            ob = " JSON_VALUE(infoJSON, '$.name') "; // substr(REGEXP_SUBSTR(infoJSON,'(\\\"name\\\": (\\\"|)\\\\w+(\\\"|,|}))'),length('name')+4) ";
-                            break;
-                        case 'date':
-                            ob = " JSON_VALUE(infoJSON, '$.date') DESC "; //substr(REGEXP_SUBSTR(infoJSON,'(\\\"date\\\": (\\\"|)\\\\w+(\\\"|,|}))'),length('date')+4) DESC ";
-                            break;
+                    var ob = "";
+                    var x = querystring.orderBy.split(",");
+                    for (v in x) {
+                        if(ob !== "") { ob += ","; }
+                        var xx = x[v].split(":");
+                        if(xx[0] === "sequence"){
+                            ob += " " + xx[0];
+                        } else {
+                            ob += " JSON_VALUE(infoJSON, '$." + xx[0] + "')";
+                        }
+                        if(xx[1] === "D"){
+                            ob += " DESC ";
+                        }
                     }
                     var v = JSON.parse(postData).sql;
                     if (v === undefined || v === '' || v === '""') { v = ''; }
@@ -168,16 +173,29 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     }
                     break;
                 case "KB_x_delete":
-                    con.query("DELETE FROM " + querystring.table + " WHERE ID = '" + querystring.ID + "'", function (err, result, fields) {
+                    con.query("DELETE FROM " + querystring.table + " WHERE ID = '" + querystring.ID + "'", function (err) {
                         if (err) {
-                            rv = "NOK: " + JSON.stringify(result);
                             response.writeHead(300, { "Content-Type": "text/plain" });
-                            response.write(rv);
+                            response.write("NOK: " + JSON.stringify(err));
                             response.end();
                         } else {
-                            response.writeHead(200, { "Content-Type": "text/plain" });
-                            response.write("OK");
-                            response.end();
+                            if( querystring.subtable !== "") {      // unlink subtable, possibly delete ?
+                                con.query("UPDATE " + querystring.subtable + " SET masterID = '' WHERE masterID = '" + querystring.ID + "'", function (err) {
+                                    if(err){
+                                        response.writeHead(300, { "Content-Type": "text/plain" });
+                                        response.write("NOK: " + JSON.stringify(err));
+                                        response.end();
+                                    } else {
+                                        response.writeHead(200, { "Content-Type": "text/plain" });
+                                        response.write("OK");
+                                        response.end();
+                                    }
+                                });
+                            } else {
+                                response.writeHead(200, { "Content-Type": "text/plain" });
+                                response.write("OK");
+                                response.end();
+                            }
                         }
                     });
                     break;
