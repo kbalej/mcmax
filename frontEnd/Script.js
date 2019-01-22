@@ -642,7 +642,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                         for (v in autoColumns){
                             if($scope.xElement.infoJSON[autoColumns[v]] === undefined ){ $scope.xElement.infoJSON[autoColumns[v]]=av[v]; }  // max + 1
                         }
-                        $http.post($scope.sloc  + 'KB_x_addUpdate?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy, JSON.stringify($scope.xElement.infoJSON)).then
+                        $http.post($scope.sloc  + 'KB_x_addUpdate?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID, JSON.stringify($scope.xElement.infoJSON)).then
                         (function (response) {
                             $scope.xCancel(f);
                         }, function (err) {
@@ -694,54 +694,66 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     $scope.doc = function (pfield) {
+        if($scope.xElement.ID == "") {
+            alert("save first !"); return;
+        }
         var d_m = {};
-        d_m.m=[];
-        d_m.i=[];
-        d_m.r=[];
+        d_m.m=[]; // array of sorted master fields
+        d_m.i=[]; // array of sorted child fields
+        d_m.r={}; // object of ref tables with array of sorted ref fields
         d_m.xMaster=$scope.xElement.infoJSON;
-        d_m.sql=""; 
-        d_m.sqlS=[]; // sequence of ref tables read from db server
+        d_m.sql = ""; // select commands to retrieve child and ref data from db server, preceded by optional update command to link new children
+        d_m.sqlS=[]; // sequence of ref tables read from db server to associate model dm.r[] with data retrieved
         d_m.form=$scope.x_form;
         d_m.formID=$scope.x_o.forms[$scope.x_form]._ID; // for update of htmlDoc
-        var d_masterVal = $scope.xElement.ID;
-        if(d_masterVal == "") {alert("save first !"); return;}
-        var d_masterID = $scope.x_o.forms[$scope.x_form].tablesID;
-        d_m.masterID = d_masterVal;
-        var d_masterName = $scope.x_o.forms[$scope.x_form].tablesName;
-        var d_childID = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesID;
+        d_m.masterID = $scope.xElement.ID;
         var d_childName = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
         // order by 
-        if ($scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].orderBy === 'sequence'){
-            d_m.sql += "SELECT * FROM VS_" + d_childName + " WHERE masterID = '" + d_masterVal + "' ORDER BY sequence for json path;";
-        } else {
-            d_m.sql += "SELECT * FROM VS_" + d_childName + " WHERE masterID = '" + d_masterVal + "' ORDER BY JSON_VALUE(infoJSON.'$." + $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].orderBy + "') for json path;";
+        var vob = "";
+        var x = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].orderBy.split(",");
+        for (v in x) {
+            if( vob !== "" ) { vob += " , ";}
+            var xx = x[v].split(":")
+            if(xx[0] === "sequence"){
+                vob += " " + xx[0];
+            } else {
+                vob += " JSON_VALUE(infoJSON, '$." + xx[0] + "')";
+            }
+            if(xx[1] === "D"){
+                vob += " DESC ";
+            }
         }
-        var d_combine = false;
-        if($scope.x_o.tables[d_masterID].parent === undefined || $scope.x_o.tables[d_masterID].parent === "") { 
-            if( confirm("link orphaned children ?")) { d_combine = true; }   // only for newly created invoices 
-        } 
+        d_m.sql += "SELECT * FROM KB_forms WHERE ID = '" + d_m.formID + "' for json path;";
+        if ($scope.x_o.forms[$scope.x_form].htmlDoc === undefined) {
+            d_m.htmlDoc="";
+        } else {
+            d_m.htmlDoc=$scope.x_o.forms[$scope.x_form].htmlDoc;
+        }
+        d_m.sql += "SELECT * FROM " + $scope.x_o.name + "_" + d_childName + " WHERE masterID = '" + d_m.masterID + "' ORDER BY " + vob + " for json path;";
         var d_masterFields = $scope.x_o.forms[$scope.x_form].fieldsJSON;
         var d_masterLookups = $scope.x_o.forms[$scope.x_form].fieldsLookup;
         var d_childFields = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].fieldsJSON;
-        dm.childTotalFields = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].fieldsTotal;
+        d_m.childTotalFields = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].fieldsTotal;
 
         var x = d_masterFields.split(",");
-        if (x !== undefined && x !== []) {
-            for (var v in x) { d_m.m.push(x[v]); }
-        }
+        for (var v in x) { d_m.m.push(x[v]); }
+
         x = d_childFields.split(",");
-        if (x !== undefined && x !== []) {
-            for (v in x) { d_m.i.push(x[v]); }
+        for (v in x) { 
+            d_m.i.push(x[v]); 
         }
+
         x = d_masterLookups.split(",");
-        if ( x !== undefined && x !==  []){
+        if ( x !== undefined){
             for (v in x) { 
                 var lu = x[v].substring(0,x[v].length - 2);
-                d_m.sqlS.push(lu);
-                d_m.sql += "SELECT * FROM VS_" + lu + " WHERE " + lu + "ID = '" + $scope.xElement.infoJSON[x[v]] + "' for json path;";
+                if($scope.xElement.infoJSON[x[v]] !== undefined) {
+                    d_m.sqlS.push(lu);
+                    d_m.sql += "SELECT * FROM " + $scope.x_o.name + "_" + lu + " WHERE ID = '" + $scope.xElement.infoJSON[x[v]] + "' for json path;";
+                }
                 var xx = $scope.x_o.forms[lu].fieldsJSON.split(",");
-                d_m.r[lu]=[];
-                if (xx !== undefined && xx !== []) {
+                d_m.r[lu] = [];
+                if (xx !== undefined) {
                     for (var vv in xx) { d_m.r[lu].push(xx[vv]); }
                 }
                 d_m.r[lu].sort();
@@ -755,23 +767,32 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                 if(x1[v1] === x2[v2]){ d_id.push(x1[v1]); }
             }
         }
-        if(d_combine) {
-            var s = "update " + $scope.x_o.name + "_" + $scope.x_o.forms[$scope.x_form].tablesName + " set masterID = '" + d_masterVal + "' where masterID='"+d_masterVal+"'";
-            for (var v in d_id){
-                s += " and JSON_VALUE(infoJSON,'$." + d.id[v] + "')='" + $scope.xElement.infoJSON[d.id[v]] + "'";
-            }
-            d_m.sql = s + ";" + d_m.sql;
+        var s = "UPDATE " + $scope.x_o.name + "_" + $scope.x_o.forms[$scope.x_form].tablesName + " SET masterID = '" + d_m.masterID + "' WHERE masterID='' ";
+        for (var v in d_id){
+            s += " and JSON_VALUE(infoJSON,'$." + d_id[v] + "') = '" + $scope.xElement.infoJSON[d_id[v]] + "'";
         }
-        d_m.combine = d_combine;
+        d_m.sql = d_m.sql + s + ";";        
+
         d_m.m.sort();
         d_m.i.sort();
-        if ($scope.x_o.forms[$scope.x_form].htmlDoc === undefined) {d_m.htmlDoc="";} else {d_m.htmlDoc=$scope.x_o.forms[$scope.x_form].htmlDoc;}
-        $http.post($scope.sloc + 'KB_x_doc?module=' + $scope.x_o.name, JSON.stringify(d_m)).then
+        $http.post($scope.sloc + 'KB_doc?module=' + $scope.x_o.name, JSON.stringify(d_m)).then
             (function (response) {
-                $scope.xElement.infoJSON[pfield] = response.data; // eg inv1111-2222-3333
-                $scope.xSave();
+                var rv = JSON.parse(response.data);
+                rv.forms[htmlDoc] = rv.html;
+                $scope.xElement.infoJSON[pfield] = rv.docName; // eg docinv1111-2222-3333
+                $http.post($scope.sloc  + 'KB_x_addUpdate?module=KB&table=forms&ID=' + d_m.formID + '&masterID=dummy', JSON.stringify(rv.forms)).then
+                    (function (response) {
+                    $http.post($scope.sloc  + 'KB_x_addUpdate?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID, JSON.stringify($scope.xElement.infoJSON)).then
+                        (function (response) {
+                            $scope.xInit();
+                        }, function (err) {
+                            alert("save error");
+                        });
+                    }, function (err) {
+                    alert("form save error");
+                });
             }, function (err) {
-                alert("error doc " + JSON.stringify(err));
+                alert("doc error");
             }
         );
     };
