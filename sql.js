@@ -5,7 +5,7 @@ var buildModel = require("./buildModel");
 var fs = require('fs');
 var sss = require('./sss');
 
-var cvt = function (result) {
+var cvt = function(result) {
     var o = [];
     for (var x in result) {
         try {
@@ -17,7 +17,7 @@ var cvt = function (result) {
     }
     return o;
 };
-var cvt1 = function (result) {
+var cvt1 = function(result) {
     var o = [];
     for (var x in result) {
         try {
@@ -29,45 +29,46 @@ var cvt1 = function (result) {
     }
     return o;
 };
+
 function start(storedProcedure, response, postData, querystring, callback) {
     var config = sss.start().sql;
     var rv = "OK";
     var vrows = "";
     var vmax = [];
+    var ooo = {};
     var connection = new Connection(config);
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
             response.writeHead(300, { "Content-Type": "text/plain" });
-            response.write(stringify(err));
+            response.write(JSON.stringify(err));
             response.end();
             connection.close();
         } else {
             storedProcedure = storedProcedure.replace("_x_", "_n_");
             var request = new Request(storedProcedure,
-                function (err) {
+                function(err) {
                     if (err) {
                         response.writeHead(300, { "Content-Type": "text/plain" });
-                        response.write(stringify(err));
+                        response.write(JSON.stringify(err));
                         response.end();
                         connection.close();
                     }
-                });
+                }
+            );
             switch (storedProcedure) {
                 case "KB_buildModel":
-                    request0 = new Request("SELECT * FROM KB_modules FOR JSON PATH; SELECT * FROM KB_forms ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_pages ORDER BY sequence FOR JSON PATH;	SELECT * FROM KB_fields ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_tables FOR JSON PATH; SELECT * FROM KB_columns FOR JSON PATH;", function (err, rowCount, rows) {
+                    var request0 = new Request("SELECT * FROM KB_modules FOR JSON PATH; SELECT * FROM KB_forms ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_pages ORDER BY sequence FOR JSON PATH;	SELECT * FROM KB_fields ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_tables FOR JSON PATH; SELECT * FROM KB_columns FOR JSON PATH;", function(err, rowCount, rows) {
                         if (err) {
                             response.writeHead(300, { "Content-Type": "text/plain" });
                             response.write(JSON.stringify(err));
                             response.end();
                             connection.close();
                         }
-                        //console.log("end request0");
                     });
-                    request0.on('row', function (rows) {
-                        //console.log("row request0");
+                    request0.on('row', function(rows) {
                         vrows += rows[0].value;
                     });
-                    request0.on('requestCompleted', function () {
+                    request0.on('requestCompleted', function() {
                         var t = vrows.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
@@ -93,18 +94,18 @@ function start(storedProcedure, response, postData, querystring, callback) {
                 case "KB_getAuto":
                     var vtable = querystring.module + "_" + querystring.table;
                     var vsq = "";
-                    x =  postData.split(",");
+                    x = postData.split(",");
                     if (x !== undefined && x !== null) {
                         for (v in x) {
                             vsq += "SELECT max(CAST(JSON_VALUE(infoJSON,'$." + x[v] + "') AS int)) FROM " + vtable + ";";
                         }
                     } else {
                         response.writeHead(300, { "Content-Type": "text/plain" });
-                        response.write("no max columns");
+                        response.write("no max auto columns");
                         response.end();
                         connection.close();
                     }
-                    request9 = new Request(vsq, function (err, rowCount, rows) {
+                    var request9 = new Request(vsq, function(err, rowCount, rows) {
                         if (err) {
                             response.writeHead(300, { "Content-Type": "text/plain" });
                             response.write(JSON.stringify(err));
@@ -112,38 +113,30 @@ function start(storedProcedure, response, postData, querystring, callback) {
                             connection.close();
                         }
                     });
-                    request9.on('row', function (rows) {
+                    request9.on('row', function(rows) {
                         vmax.push(rows[0].value);
                     });
-                    request9.on('requestCompleted', function () {
+                    request9.on('requestCompleted', function() {
                         response.writeHead(200, { "Content-Type": "text/plain" });
-                        response.write(vmax);
+                        response.write(JSON.stringify(vmax));
                         response.end();
                         connection.close();
                     });
                     connection.execSql(request9);
                     return;
-                case "KB_x_doc": 
-                    var o = JSON.parse(postData);
-                    var r = "";
-                    // execute sql 
-                    request8 = new Request(o.sql, function (err, rowCount, rows) {
-                        if (err) {
-                            response.writeHead(300, { "Content-Type": "text/plain" });
-                            response.write(JSON.stringify(err));
-                            response.end();
-                            connection.close();
-                        }
+                case "KB_doc":
+                    ooo = JSON.parse(postData);
+                    vrows = "";
+                    var request8 = new Request(ooo.sql, function() {});
+                    request8.on('row', function(rows) {
+                        vrows += rows[0].value;
                     });
-                    request8.on('row', function (rows) {
-                        r += rows[0].value;
-                    });
-                    request8.on('requestCompleted', function () {
-                        // create data model
+                    request8.on('requestCompleted', function() {
+                        // build data model
                         var om = {};
-                        om.m = o.xMaster;
+                        om.m = ooo.xMaster;
                         om.r = {};
-                        var t = r.replace("}][{", "}],[{");
+                        var t = vrows.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
@@ -151,92 +144,89 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         t = t.replace("}][{", "}],[{");
                         t = "[" + t.replace("}][{", "}],[{") + "]";
                         var tt = JSON.parse(t);
-                        var p = 0;
-                        if (o.combine) {p = 1}
-                        om.i = cvt1(tt[p]);  // []
+                        var vformsSave = cvt1(tt[0])[0];  // infoJSON 
+                        om.i = cvt1(tt[1]); // []
                         om.if = {};
                         // calc footer totals for each total column, eg om.if.cost:calc value
-                        for (var t in o.childTotalFields.split(",")) {
-                            var tt = 0;
-                            for (var v in om.i){
-                                if(om.i[v] !== undefined) {tt+=om.i[v];}
+                        var ttot = ooo.childTotalFields.split(",");
+                        for (var t in ttot) {
+                            var tot = 0;
+                            for (var v in om.i) {
+                                if (om.i[v] !== undefined) { 
+                                    tot += om.i[v][ttot[t]];
+                                }
                             }
-                            om.if[t] = tt;
+                            om.if[ttot[t]] = tot;
                         }
-                        var ct=0,ct1=0;
-                        for (x in tt) {
-                            ct=ct+1;
-                            if (ct > p) {
-                                om.r[o.sqlS[ct1]]=cvt1(tt[x]);
-                                ct1+=1;
-                            }
+                        var ct = 2;
+                        for (x in ooo.sqlS) {
+                            om.r[ooo.sqlS[x]] = cvt1(tt[ct])[0];
+                            ct += 1;
                         }
-                        // update KB_forms html - without model data
-                        request7 = new Request("UPDATE KB_forms SET htmlDoc = " + o.htmlDoc + " where formsID = '" + o.formID + "';", function (err, rowCount, rows) {
+                        var vhtmlDocSave = ooo.htmlDoc;
+                        ooo.htmlDoc = ooo.htmlDoc.replace("//model//", JSON.stringify(om));
+                        var w = window.open();
+                        w.document.open("","doc" + ooo.form + ooo.masterID);
+                        w.document.write(ooo.htmlDoc);
+                        w.document.close();
+                        fs.writeFile(__dirname + "/doc/doc" + ooo.form + ooo.masterID + ".html", ooo.htmlDoc, "utf8", function(err, data) {
                             if (err) {
                                 response.writeHead(300, { "Content-Type": "text/plain" });
                                 response.write(JSON.stringify(err));
                                 response.end();
                                 connection.close();
-                            } else { 
-                                // complete and write final html 
-                                o.htmlDoc= v.replace("//model//", JSON.stringify(om));
-                                fs.writeFile(_dirname + "/doc/" + o.form + o.masterID + ".html",o.htmlDoc,function(err) {
-                                    if(err) {
-                                        response.writeHead(300, { "Content-Type": "text/plain" });
-                                        response.write(JSON.stringify(err));
-                                        response.end();
-                                        connection.close();   
-                                    } else {
-                                        response.writeHead(200, { "Content-Type": "text/plain" });
-                                        response.write(o.form + o.masterID); // doc name
-                                        response.end();
-                                        connection.close();  
-                                    }
-                                });
+                            } else {
+                                var rv = {};
+                                rv.docName = "doc" + ooo.form + ooo.masterID;
+                                rv.forms = vformsSave;
+                                rv.html = vhtmlDocSave;
+                                response.writeHead(200, { "Content-Type": "text/plain" });
+                                response.write(JSON.stringify(rv)); 
+                                response.end();
+                                connection.close();
                             }
                         });
-                        connection.execSql(request7);
+                        //connection.execSql(request7);    
                     });
                     connection.execSql(request8);
                     return;
+
                 case "KB_n_getAll":
                     var vtable = querystring.module + "_" + querystring.table;
                     var vob = "";
                     var x = querystring.orderBy.split(",");
                     for (v in x) {
-                        if( vob !== "" ) { vob += " , ";}
+                        if (vob !== "") { vob += " , "; }
                         var xx = x[v].split(":")
-                        if(xx[0] === "sequence"){
+                        if (xx[0] === "sequence") {
                             vob += " " + xx[0];
                         } else {
                             vob += " JSON_VALUE(infoJSON, '$." + xx[0] + "')";
                         }
-                        if(xx[1] === "D"){
+                        if (xx[1] === "D") {
                             vob += " DESC ";
                         }
                     }
                     var vw = true;
-                    if (querystring.masterID !== undefined && querystring.masterID !== "") { vw = " masterID = '" + querystring.masterID + "' " } else { vw = " masterID = '' "}
+                    if (querystring.masterID !== undefined && querystring.masterID !== "") { vw = " masterID = '" + querystring.masterID + "' " } else { vw = " masterID = '' " }
                     var vv = JSON.parse(postData).sql;
                     if (vv !== "") {
                         vw += " AND " + vv;
                     }
                     var vsql = "SELECT count(*) RC FROM " + vtable + " WHERE " + vw + " FOR JSON PATH;SELECT * FROM " + vtable + " WHERE " + vw + " ORDER BY " + vob + " OFFSET " + (querystring.pageCt - 1) * querystring.rowsPage + " ROWS FETCH NEXT " + querystring.rowsPage + " ROWS ONLY FOR JSON PATH;";
-                    var request1 = new Request(vsql, function (err, rowCount, rows) {
+                    vrows = "";
+                    var request1 = new Request(vsql, function(err, rowCount, rows) {
                         if (err) {
-                            rv = JSON.stringify(err);
                             response.writeHead(300, { "Content-Type": "text/plain" });
-                            response.write(rv);
+                            response.write(JSON.stringify(err));
                             response.end();
                             connection.close();
                         }
                     });
-                    vrows = "";
-                    request1.on('row', function (rows) {
+                    request1.on('row', function(rows) {
                         vrows += rows[0].value;
                     });
-                    request1.on('requestCompleted', function () {
+                    request1.on('requestCompleted', function() {
                         var t = "[" + vrows.replace("}][{", "}],[{") + "]";
                         if (t === "[]") {
                             return;
@@ -274,11 +264,11 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     request.addParameter('sequence', TYPES.NVarChar, querystring.s);
                     break;
             }
-            request.on('returnValue', function (paramName, value, metadata) {
+            request.on('returnValue', function(paramName, value, metadata) {
                 //console.log("returnValue request");
                 rv = value;
             });
-            request.on('requestCompleted', function () {
+            request.on('requestCompleted', function() {
                 //console.log("requestCompleted request");
                 connection.close();
                 response.writeHead(200, { "Content-Type": "text/plain" });

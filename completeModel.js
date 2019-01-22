@@ -263,7 +263,7 @@ function start(x_o) {
                                     vhtmlEdit += "<input type='text' class='form-control' placeholder='Zoom' readonly ng-model='xElement.infoJSON." + c.name + "Zoom'>";
                                     break;
                                 case "doc":
-                                    vhtmlEdit += "<a href='{{sloc}}doc/{{item.infoJSON." + c.name + "}}' target='_blank'>{{item.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='item.infoJSON." + c.name + "' class='form-control' ng-click='doc(\"" + c.name + "\")' value='create doc and save' >";
+                                    vhtmlEdit += "<a href='{{sloc}}{{xElement.infoJSON." + c.name + "}}.html' target='_blank'> {{xElement.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='doc(\"" + c.name + "\")' value='create doc and save' >";
                                     break;
                                 case "lookup":
                                     vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";

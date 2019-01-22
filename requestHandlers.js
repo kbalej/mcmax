@@ -27,41 +27,49 @@ function KB_x_sequencePut(response, postData, pathname, querystring, request, db
     console.log("Request handler 'KB_x_sequencePut' was called.");
     dbh.start("KB_x_sequencePut", response, postData, querystring);
 }
-function KB_x_getAuto(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_x_getAuto' was called.");
-    dbh.start("KB_x_getAuto", response, postData, querystring);
+function KB_getAuto(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_getAuto' was called.");
+    dbh.start("KB_getAuto", response, postData, querystring);
 }
-function KB_x_doc(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_x_doc' was called.");
+function KB_doc(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_doc' was called.");
     var d_m = JSON.parse(postData);
-    var vmodel;
     if(d_m.htmlDoc === undefined || d_m.htmlDoc === ""){
+        // build html with references to data model
         var v, vitem11="", vheader="", vbody="", vfooter="";
         for (v in d_m.m){
-            vitem11 += "{{dm.m." + d_m.m[v] + "}}\r\n";
+            vitem11 += "{{dm.m." + d_m.m[v] + "}}";
+        }
+        function getArrayElements(value,index,array) {
+            vitem11 += "{{dm.r." + v + "." + value + "}}";
         }
         for (v in d_m.r){
-            for (vv in d_m.r[v]) {
-                vitem11 += "{{dm.r." + d_m.r[v] + "." + d_m.r[v][vv] + "}}\r\n";
-            }
+            d_m.r[v].forEach(getArrayElements);
         }
         for (v in d_m.i){
-            vheader += "<th>" + d_m.i[v] + "</th>\r\n";
-            vbody += "<td>{{dm.i." + d_m.i[v] + "}}</td>\r\n";
-            vfooter += "<td>{{dm.if." + d_m.i[v] + "}}</td>\r\n";
+            vheader += "<th>" + d_m.i[v] + "</th>";
+            vbody += "<td>{{body." + d_m.i[v] + "}}</td>";
+            vfooter += "<td>{{dm.if." + d_m.i[v] + "}}</td>";
         }
-        fs.readFile(__dirname + "doc/doc.html", function(err,data) {
+        fs.readFile(__dirname + "/doc/doc.txt", 'utf8', function(err,data) {
+            if(err){
+                response.writeHead(300, { "Content-Type": "text/plain" });
+                response.write("doc.html error");
+                response.end();
+            } else {
             var v = data;
             v = v.replace("<!--item11-->", vitem11);
             v = v.replace("<!--heading-->", vheader);
             v = v.replace("<!--body-->", vbody);
             v = v.replace("<!--footer-->", vfooter);
             d_m.htmlDoc=v;
-            dbh.start("KB_x_doc", response, JSON.stringify(d_m), querystring);
+            d_m.updateSw = true;   // update KB_forms.htmlDoc
+            dbh.start("KB_doc", response, JSON.stringify(d_m), querystring);
+            }
         });
 
     } else {
-        dbh.start("KB_x_doc", response, JSON.stringify(d_m), querystring);
+        dbh.start("KB_doc", response, JSON.stringify(d_m), querystring);
     }
 }
 function upload(response, postData, pathname, querystring, request, dbh) {
@@ -86,18 +94,16 @@ function load(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'load' was called.");
     buildFE.start(response, postData, pathname, querystring, request, dbh);
 }
-function KB_x_showFile(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_x_showFile' was called.");
+function KB_showFile(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_showFile' was called.");
     var floc = __dirname + "/doc/";
     fs.readFile(floc + pathname, 'utf8',
         function (err, data) {
             if (err) {
                 response.writeHead(300, { "Content-Type": "text/plain" });
-                response.write("HTML not loaded");
+                response.write("file not loaded");
                 response.end();
-                console.log("HTML not loaded");
             } else {
-                fs.close;
                 response.writeHead(200, { "Content-Type": "text/html" });
                 response.write(data);
                 response.end();
@@ -113,3 +119,6 @@ exports.KB_x_getAll = KB_x_getAll;
 exports.KB_x_addUpdate = KB_x_addUpdate;
 exports.KB_x_delete = KB_x_delete;
 exports.KB_x_sequencePut = KB_x_sequencePut;
+exports.KB_getAuto = KB_getAuto;
+exports.KB_doc = KB_doc;
+exports.KB_showFile = KB_showFile;

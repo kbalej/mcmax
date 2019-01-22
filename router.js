@@ -2,7 +2,7 @@
  if (typeof handle[pathname] === 'function') {
     handle[pathname](response, postData, pathname, querystring, request, dbh); 
  } else { 
-    handle["KB_x_showFile"](response, postData, pathname, querystring, request, dbh);
+    handle["KB_showFile"](response, postData, pathname, querystring, request, dbh);
  }
 } 
 exports.route = route;

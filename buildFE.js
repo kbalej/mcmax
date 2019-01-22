@@ -20,7 +20,8 @@ var t_model = "";
 
 function start(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'buildFE' was called.");
-    fs.readFile("/Users/Admin/OneDrive/p_A/frontEnd/HTML.html", 'utf8',
+    var floc = __dirname + "/frontEnd/";
+    fs.readFile(floc + "HTML.html", 'utf8',
         function (err, data) {
             if (err) {
                 response.writeHead(300, { "Content-Type": "text/plain" });
@@ -29,8 +30,7 @@ function start(response, postData, pathname, querystring, request, dbh) {
                 console.log("HTML not loaded");
             } else {
                 t_HTML = data;
-                fs.close;
-                fs.readFile("/Users/Admin/OneDrive/p_A/frontEnd/Script.js", 'utf8',
+                fs.readFile(floc + "Script.js", 'utf8',
                     function (err, data) {
                         if (err) {
                             response.writeHead(300, { "Content-Type": "text/plain" });
@@ -39,7 +39,6 @@ function start(response, postData, pathname, querystring, request, dbh) {
                             console.log("Script not loaded");
                          } else {
                             t_Script = data;
-                            fs.close;
                             if (querystring.module === undefined) {
                                 querystring.module = "KB";
                             }
