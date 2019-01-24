@@ -6,7 +6,6 @@ var buildFE = require("./buildFE");
 
 function login(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'login' was called.");
-    console.log("You've sent: " + postData);
     response.writeHead(200, { "Content-Type": "text/plain" });
     response.write("OK");
     response.end();
@@ -34,43 +33,59 @@ function KB_getAuto(response, postData, pathname, querystring, request, dbh) {
 function KB_doc(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'KB_doc' was called.");
     var d_m = JSON.parse(postData);
-    if(d_m.htmlDoc === undefined || d_m.htmlDoc === ""){
-        // build html with references to data model
-        var v, vitem11="", vheader="", vbody="", vfooter="";
-        for (v in d_m.m){
-            vitem11 += "{{dm.m." + d_m.m[v] + "}}";
-        }
-        function getArrayElements(value,index,array) {
-            vitem11 += "{{dm.r." + v + "." + value + "}}";
-        }
-        for (v in d_m.r){
-            d_m.r[v].forEach(getArrayElements);
-        }
-        for (v in d_m.i){
-            vheader += "<th>" + d_m.i[v] + "</th>";
-            vbody += "<td>{{body." + d_m.i[v] + "}}</td>";
-            vfooter += "<td>{{dm.if." + d_m.i[v] + "}}</td>";
-        }
-        fs.readFile(__dirname + "/doc/doc.txt", 'utf8', function(err,data) {
-            if(err){
-                response.writeHead(300, { "Content-Type": "text/plain" });
-                response.write("doc.html error");
-                response.end();
-            } else {
-            var v = data;
-            v = v.replace("<!--item11-->", vitem11);
-            v = v.replace("<!--heading-->", vheader);
-            v = v.replace("<!--body-->", vbody);
-            v = v.replace("<!--footer-->", vfooter);
-            d_m.htmlDoc=v;
-            d_m.updateSw = true;   // update KB_forms.htmlDoc
-            dbh.start("KB_doc", response, JSON.stringify(d_m), querystring);
+    fs.readFile(__dirname + "/doc/doc" + d_m.form + ".txt", 'utf8', function(err,data) {
+        if(err) {
+            // build html with references to data model
+            var v, vitem11="", vheader="", vbody="", vfooter="";
+            for (v in d_m.m){
+                vitem11 += "{{dm.m." + d_m.m[v] + "}}";
             }
-        });
+            function getArrayElements(value,index,array) {
+                vitem11 += "{{dm.r." + v + "." + value + "}}";
+            }
+            for (v in d_m.r){
+                d_m.r[v].forEach(getArrayElements);
+            }
+            for (v in d_m.i){
+                vheader += "<th>" + d_m.i[v] + "</th>";
+                vbody += "<td>{{body." + d_m.i[v] + "}}</td>";
+                vfooter += "<td>{{dm.if." + d_m.i[v] + "}}</td>";
+            }
+            fs.readFile(__dirname + "/doc/doc.txt", 'utf8', function(err,data) {
+                if(err){
+                    response.writeHead(300, { "Content-Type": "text/plain" });
+                    response.write("doc.html error");
+                    response.end();
+                } else {
+                    var v = data;
+                    v = v.replace("<!--item11-->", vitem11);
+                    v = v.replace("<!--heading-->", vheader);
+                    v = v.replace("<!--body-->", vbody);
+                    v = v.replace("<!--footer-->", vfooter);
+                    d_m.htmlDoc=v;
+                    fs.writeFile(__dirname + "/doc/doc" + d_m.form + ".txt", v, "utf8", function(err, data) {
+                        dbh.start("KB_doc", response, JSON.stringify(d_m), querystring);
+                    });
+                }
+            });
 
-    } else {
-        dbh.start("KB_doc", response, JSON.stringify(d_m), querystring);
-    }
+        } else {
+            d_m.htmlDoc=data;
+            dbh.start("KB_doc", response, JSON.stringify(d_m), querystring);
+        }
+    });
+}
+function KB_chart(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_chart' was called.");
+    fs.readFile(__dirname + "/doc/chart.html", 'utf8', function(err,data) {
+        if(err){
+            response.writeHead(300, { "Content-Type": "text/plain" });
+            response.write("chart.html error");
+            response.end();
+        } else {
+            dbh.start("KB_chart", response, data, querystring);
+        }
+    });
 }
 function upload(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'upload' was called.");
@@ -121,4 +136,5 @@ exports.KB_x_delete = KB_x_delete;
 exports.KB_x_sequencePut = KB_x_sequencePut;
 exports.KB_getAuto = KB_getAuto;
 exports.KB_doc = KB_doc;
+exports.KB_chart = KB_chart;
 exports.KB_showFile = KB_showFile;

@@ -124,6 +124,27 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     });
                     connection.execSql(request9);
                     return;
+                case "KB_chart":
+                    vrows = "";
+                    var d = new Date();
+                    var vlimit = d.getFullYear() - 2;
+                    var vsql = "SELECT CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) as int) as nYear, CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),6,2) as int) as nMonth, ";
+                    vsql += "SUM(CAST(JSON_VALUE(infoJSON, '$.cost_NET') as numeric)) as Tnet FROM VS_invDetails WHERE JSON_VALUE(infoJSON, '$.service') <> 'Divers' ";
+                    vsql += "AND CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) as int) > " + vlimit + " GROUP BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4), ";
+                    vsql += "SUBSTRING(JSON_VALUE(infoJSON, '$.date'),6,2) ORDER BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4), SUBSTRING(JSON_VALUE(infoJSON, '$.date'),6,2) for json path;";
+                    var request7 = new Request(vsql, function() {});
+                    request7.on('row', function(rows) {
+                        vrows += rows[0].value;
+                    });
+                    request7.on('requestCompleted', function() {
+                        postData = postData.replace("//data//", vrows);
+                        response.writeHead(200, { "Content-Type": "text/plain" });
+                        response.write(postData); 
+                        response.end();
+                        connection.close();
+                    });
+                    connection.execSql(request7);
+                    return;
                 case "KB_doc":
                     ooo = JSON.parse(postData);
                     vrows = "";
@@ -134,7 +155,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     request8.on('requestCompleted', function() {
                         // build data model
                         var om = {};
-                        om.m = ooo.xMaster;
+                        om.m = ooo.xMaster; // load m
                         om.r = {};
                         var t = vrows.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
@@ -144,10 +165,10 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         t = t.replace("}][{", "}],[{");
                         t = "[" + t.replace("}][{", "}],[{") + "]";
                         var tt = JSON.parse(t);
-                        var vformsSave = cvt1(tt[0])[0];  // infoJSON 
-                        om.i = cvt1(tt[1]); // []
+                        // load i
+                        om.i = cvt1(tt[0]); // []
+                        // calc footer totals for each total column, eg om.if.cost
                         om.if = {};
-                        // calc footer totals for each total column, eg om.if.cost:calc value
                         var ttot = ooo.childTotalFields.split(",");
                         for (var t in ttot) {
                             var tot = 0;
@@ -158,17 +179,14 @@ function start(storedProcedure, response, postData, querystring, callback) {
                             }
                             om.if[ttot[t]] = tot;
                         }
-                        var ct = 2;
+                        // load r 
+                        var ct = 1;
                         for (x in ooo.sqlS) {
                             om.r[ooo.sqlS[x]] = cvt1(tt[ct])[0];
                             ct += 1;
                         }
-                        var vhtmlDocSave = ooo.htmlDoc;
-                        ooo.htmlDoc = ooo.htmlDoc.replace("//model//", JSON.stringify(om));
-                        var w = window.open();
-                        w.document.open("","doc" + ooo.form + ooo.masterID);
-                        w.document.write(ooo.htmlDoc);
-                        w.document.close();
+                        // write doc<form><ID> file
+                        ooo.htmlDoc = ooo.htmlDoc.replace("//model//", JSON.stringify(om)); // complete doc<form> template
                         fs.writeFile(__dirname + "/doc/doc" + ooo.form + ooo.masterID + ".html", ooo.htmlDoc, "utf8", function(err, data) {
                             if (err) {
                                 response.writeHead(300, { "Content-Type": "text/plain" });
@@ -176,17 +194,13 @@ function start(storedProcedure, response, postData, querystring, callback) {
                                 response.end();
                                 connection.close();
                             } else {
-                                var rv = {};
-                                rv.docName = "doc" + ooo.form + ooo.masterID;
-                                rv.forms = vformsSave;
-                                rv.html = vhtmlDocSave;
                                 response.writeHead(200, { "Content-Type": "text/plain" });
-                                response.write(JSON.stringify(rv)); 
+                                // return doc<form><ID> name
+                                response.write("doc" + ooo.form + ooo.masterID); 
                                 response.end();
                                 connection.close();
                             }
                         });
-                        //connection.execSql(request7);    
                     });
                     connection.execSql(request8);
                     return;
@@ -265,11 +279,9 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     break;
             }
             request.on('returnValue', function(paramName, value, metadata) {
-                //console.log("returnValue request");
                 rv = value;
             });
             request.on('requestCompleted', function() {
-                //console.log("requestCompleted request");
                 connection.close();
                 response.writeHead(200, { "Content-Type": "text/plain" });
                 response.write(rv);
