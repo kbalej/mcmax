@@ -671,15 +671,20 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     $scope.xDelete = function (f) {
-        if (confirm("confirm deletion") === true) {
+        if (confirm("confirm deletion")) {
             var vst = "";
-            if($scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName === undefined) {vst="";} else {vst=$scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;}
+            if($scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]] == undefined) {
+                vst="";
+            } else {
+                vst=$scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
+            }
             $http.get($scope.sloc + 'KB_x_delete?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&subtable=' + vst).then
                 (function (response) {
                     $scope.xCancel(f);
                 }, function (err) {
                     alert("error 4");
-                });
+                }
+            );
         }
     };
 
@@ -692,7 +697,19 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                 alert("error 5");
             });
     };
-
+    $scope.chart = function (pfield) {
+        $http.post($scope.sloc + 'KB_chart?module=' + $scope.x_o.name, "dummy").then
+            (function (response) {
+                var rv = response.data;
+                var w = window.open();
+                w.document.open("","chart");
+                w.document.write(rv);
+                w.document.close();
+            }, function (err) {
+                alert("chart error");
+            }
+        );
+    };
     $scope.doc = function (pfield) {
         if($scope.xElement.ID == "") {
             alert("save first !"); return;
@@ -705,7 +722,6 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         d_m.sql = ""; // select commands to retrieve child and ref data from db server, preceded by optional update command to link new children
         d_m.sqlS=[]; // sequence of ref tables read from db server to associate model dm.r[] with data retrieved
         d_m.form=$scope.x_form;
-        d_m.formID=$scope.x_o.forms[$scope.x_form]._ID; // for update of htmlDoc
         d_m.masterID = $scope.xElement.ID;
         var d_childName = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
         // order by 
@@ -723,7 +739,6 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                 vob += " DESC ";
             }
         }
-        d_m.sql += "SELECT * FROM KB_forms WHERE ID = '" + d_m.formID + "' for json path;";
         if ($scope.x_o.forms[$scope.x_form].htmlDoc === undefined) {
             d_m.htmlDoc="";
         } else {
@@ -775,22 +790,16 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
         d_m.m.sort();
         d_m.i.sort();
+
         $http.post($scope.sloc + 'KB_doc?module=' + $scope.x_o.name, JSON.stringify(d_m)).then
             (function (response) {
-                var rv = JSON.parse(response.data);
-                rv.forms[htmlDoc] = rv.html;
-                $scope.xElement.infoJSON[pfield] = rv.docName; // eg docinv1111-2222-3333
-                $http.post($scope.sloc  + 'KB_x_addUpdate?module=KB&table=forms&ID=' + d_m.formID + '&masterID=dummy', JSON.stringify(rv.forms)).then
+                $scope.xElement.infoJSON[pfield] = response.data; // eg docinv1111-2222-3333
+                $http.post($scope.sloc  + 'KB_x_addUpdate?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID, JSON.stringify($scope.xElement.infoJSON)).then
                     (function (response) {
-                    $http.post($scope.sloc  + 'KB_x_addUpdate?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID, JSON.stringify($scope.xElement.infoJSON)).then
-                        (function (response) {
-                            $scope.xInit();
-                        }, function (err) {
-                            alert("save error");
-                        });
+                        // display doc page
                     }, function (err) {
-                    alert("form save error");
-                });
+                        alert("save error");
+                    });
             }, function (err) {
                 alert("doc error");
             }
