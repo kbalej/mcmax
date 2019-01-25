@@ -1,0 +1,144 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</head>
+<body>
+    <div id="chartContainer" style="height: 250px; width: 50%;"></div>
+    <hr />
+    <hr />
+    <div id="chartContainer2" style="height: 250px; width: 50%;"></div>
+    <hr />
+    <hr />
+    <div id="chartContainer1" style="height: 250px; width: 50%;"></div>
+    <script>
+        // included to be able to detect chartContainer from javascript
+        $.get("https://todolistapi1234.azurewebsites.net/api/SalesReport", function (data1) {
+
+            var data = $.parseJSON(data1);
+            var ct = -1;
+            var years = [];
+            var yearValue = "_INVALID_YEAR_VALUE_";
+            for (var i = 0; i < data.length; i++) {
+                var Element = data[i];
+                if (Element.nYear !== yearValue) {
+                    ct = ct + 1;
+                    var year = {
+                        label: Element.nYear,
+                        months: []
+                    };
+                    yearValue = year.label;
+                    years.push(year);
+                }
+                var Month = {
+                    label: Element.nMonth,
+                    y: Element.Tnet
+                };
+                years[ct].months.push(Month);
+            }
+            var str = JSON.stringify(years[0].months);
+            var res = str.replace(/"/g, "");
+            res = res.replace(/label:/g, 'label: "');
+            res = res.replace(/,y:/g, '", y: ');
+
+            str = JSON.stringify(years[1].months);
+            var res1 = str.replace(/"/g, "");
+            res1 = res1.replace(/label:/g, 'label: "');
+            res1 = res1.replace(/,y:/g, '", y: ');
+
+            var chart = new CanvasJS.Chart("chartContainer",
+                {
+                    theme: "theme3",
+                    animationEnabled: true,
+                    title: {
+                        text: "net sales per month",
+                    },
+                    toolTip: {
+                        shared: true
+                    },
+                    data: [
+                        {
+                            type: "column",
+                            name: '"' + years[0].label + '"',
+                            legendText: '"' + years[0].label + '"',
+                            showInLegend: true,
+                            dataPoints: eval(res)
+                        },
+                        {
+                            type: "column",
+                            name: '"' + years[1].label + '"',
+                            legendText: '"' + years[1].label + '"',
+                            showInLegend: true,
+                            dataPoints: eval(res1)
+                        }
+                    ],
+                    legend: {
+                        cursor: "pointer"
+                    },
+                });
+            chart.render();
+            var chart1 = new CanvasJS.Chart("chartContainer1", {
+                title: {
+                    text: "yearly turnover"
+                },
+                data: [
+                    {
+                        // Change type to "doughnut", "line", "splineArea", etc.
+                        type: "splineArea",
+                        dataPoints: [
+                            { label: 2001, y: 336 },
+                            { label: 2002, y: 11152 },
+                            { label: 2003, y: 27040 },
+                            { label: 2004, y: 38439 },
+                            { label: 2005, y: 49105 },
+                            { label: 2006, y: 47337 },
+                            { label: 2007, y: 47944 },
+                            { label: 2008, y: 47375 },
+                            { label: 2009, y: 53941 },
+                            { label: 2010, y: 62332 },
+                            { label: 2011, y: 56294 },
+                            { label: 2012, y: 42307 },
+                            { label: 2013, y: 58559 },
+                            { label: 2014, y: 70106 },
+                            { label: 2015, y: 67213 },
+                            { label: 2016, y: 81794 },
+                            { label: 2017, y: 55425 },
+                            { label: 2018, y: 92992 },
+                            { label: 2019, y: 11398 }
+                        ]
+                    }
+                ]
+            });
+            chart1.render();
+            var chart2 = new CanvasJS.Chart("chartContainer2", {
+                title: {
+                    text: "sales structure"
+                },
+                data: [
+                    {
+                        // Change type to "doughnut", "line", "splineArea", etc.
+                        type: "doughnut",
+                        dataPoints: [
+                            { label: "Nettoyage", y: 593237 },
+                            { label: "Service", y: 256424 },
+                            { label: "Lessive", y: 71428 },
+                            { label: "Divers", y: 74104 }
+                        ]
+                    }
+                ]
+            });
+            chart2.render();
+        });
+
+    </script>
+</body>
+</html>
