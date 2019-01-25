@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>McMax</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular-resource.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular-route.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular-sanitize.min.js"></script>
+<style>
+.item11 {
+grid-area: header1;
+}
+.item12 {
+grid-area: header2;
+text-align: center;
+}
+.item13 {
+grid-area: header3;
+text-align: right;
+}
+.item21 {
+grid-area: header21;
+}
+.item22 {
+grid-area: header22;
+text-align: center;
+}
+.item23 {
+grid-area: header23;
+text-align: right;
+}
+.itemI {
+text-align: right;
+grid-area: item;
+}
+.grid-container {
+display: grid;
+grid-template-areas: 'header1 header1 header2 header2 header3 header3' 'header21 header21 header22 header22 header23 header23' 'item item item item item item';
+grid-gap: 1px;
+padding: 0px;
+}
+.grid-container > div {
+padding: 20px 0;
+font-size: 14px;
+}
+table {
+border-collapse: collapse;
+width: 100%;
+}
+th, td {
+padding: 8px;
+text-align: right;
+}
+tr:nth-child(even) {
+background-color: #f2f2f2
+}
+thead {
+background-color: #4CAF50;
+color: white;
+}
+tfoot {
+background-color: grey;
+color: white;
+}
+/*#id1 {}*/
+</style>
+</head>
+<body>
+<div id='MAIN' ng-app='docApp' ng-controller='docCtrl'>
+<div class='grid-container'>
+<div class='item11'>
+<!--item11-->
+</div>
+<div class='item12'></div>
+<div class='item13'>
+<img src='https://verbierservices.net/images/logoVS.jpg'>
+</div>
+<div class='item21'>
+</div>
+<div class='item22'>
+</div>
+<div class='item23'>
+</div>
+<div class='itemI'>
+<table>
+<thead>
+<tr>
+<!--heading-->
+</tr>
+</thead>
+<tbody>
+<tr ng-repeat='body in dm.i'>
+<!--body-->
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<!--footer-->
+</tr>
+</tfoot>
+</table>
+</div>
+</div>
+</div>
+<script>
+var docApp = angular.module('docApp', ['ngSanitize']);
+docApp.filter('kDateAddFromDateISO8601', [function() { 
+  return function(isoDateString, days) { 
+    var parts; 
+    var isoTime; 
+    var date; 
+    isoDateString = isoDateString || ""; 
+    days = days || 0; 
+    parts = isoDateString.match(/\d+/g); 
+    isoTime = Date.UTC(parts[0], parts[1] - 1, parts[2], parts[3], parts[4], parts[5]); 
+    date = new Date(isoTime); 
+    if (days) { 
+      date.setDate(date.getDate() + days); 
+    } 
+    return date; 
+    }; 
+}]);
+docApp.controller('docCtrl', function ($scope, $timeout, $http, $sce) {
+$scope.dm = //model//;
+});
+</script>
+</body>
+</html>
