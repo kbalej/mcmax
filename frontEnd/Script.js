@@ -61,8 +61,9 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     $scope.orderByMe = function (x) {       // sort LIST items by clicking on column header
-        if (typeof $scope.myOrderBy === undefined) {
-            $scope.myOrderBy = "infoJSON." + x;
+        if ($scope.myOrderBy === undefined) {
+            var x1 = x.replace("ID","Name"); // replace xID by xName
+            $scope.myOrderBy = "infoJSON." + x1;    
         } else {
             $scope.myOrderBy = undefined;
         }
@@ -236,11 +237,14 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                                             d.setDate(d.getDate() + i)
                                         }
                                         $scope.xElement.infoJSON[c.name]=d;
+                                        $scope.xEditFormDirty = true;
                                     } else {
                                         $scope.xElement.infoJSON[c.name] = new Date(c.default);    
+                                        $scope.xEditFormDirty = true;
                                     }
                                 } else {
                                     $scope.xElement.infoJSON[c.name] = c.default;
+                                    $scope.xEditFormDirty = true;
                                 }
                             }
                         }
@@ -281,6 +285,16 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             }
         }
         if (flag) {
+            // update xElement calcNumbers from form field value - angular link not operational for calculated fields
+            // $scope.xElement.infoJSON.net = document.getElementById("<form>net").value
+            var t_c = $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].columns;
+            for (var c in t_c) {
+                if ($scope.x_o.columns[t_c[c]].calcNumber !== undefined && $scope.x_o.columns[t_c[c]].calcNumber) {
+                    if (eval("document.getElementById('"+$scope.x_o.forms[$scope.x_form].name + $scope.x_o.columns[t_c[c]].name+"').value") !== undefined) {
+                        eval("$scope.xElement.infoJSON[$scope.x_o.columns[t_c[c]].name] = document.getElementById('"+$scope.x_o.forms[$scope.x_form].name + $scope.x_o.columns[t_c[c]].name+"').value");
+                    }
+                }
+            }
             for (x in e) {
                 if (t_val[x] !== undefined) { t_val[x].value = e[x]; }
             }
@@ -296,7 +310,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                         finally {
                             if (res) {
                                 t_val[t].status = false;
-                                mess.push(t_val[t].name + ": regex required");
+                                mess.push(t_val[t].name + ": required");
                             }
                         }
                     }
@@ -338,17 +352,6 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             t_val = undefined;
             if (!vok) {
                 alert(mess);
-            } else {
-                // update xElement calcNumbers from form field value - angular link not operational for calculated fields
-                // $scope.xElement.infoJSON.net = document.getElementById("<form>net").value
-                var t_c = $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].columns;
-                for (var c in t_c) {
-                    if ($scope.x_o.columns[t_c[c]].calcNumber !== undefined && $scope.x_o.columns[t_c[c]].calcNumber) {
-                        if (eval("document.getElementById('"+$scope.x_o.forms[$scope.x_form].name + $scope.x_o.columns[t_c[c]].name+"').value") !== undefined) {
-                            eval("$scope.xElement.infoJSON[$scope.x_o.columns[t_c[c]].name] = document.getElementById('"+$scope.x_o.forms[$scope.x_form].name + $scope.x_o.columns[t_c[c]].name+"').value");
-                        }
-                    }
-                }
             }
             return vok;
         }
@@ -393,6 +396,13 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         while (temp.form !== item.form || temp.form === "") {
             temp = $scope.x_n.pop();
         }
+        $scope.retrievePrevious();
+        $scope.x_page = "LIST";  // navUp to LIST, not EDIT
+        $scope.xEditFormDirty = false;
+        $scope.xInitComplete();
+    };
+
+    $scope.retrievePrevious = function () {
         $scope.x_masterID = temp.masterID;
         $scope.x_masterName = temp.masterName;
         $scope.x_form = temp.form;
@@ -403,18 +413,8 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         $scope.xSearchListTitle = temp.xSearchListTitle;
         $scope.xSearchSql = temp.xSearchSql;
         $scope.xElement = Object.assign({}, temp.xElement);
+        $scope.xElement.infoJSON[vto] = vfromValue;
         $scope.myOrderBy = undefined;
-        $http.post($scope.sloc  + 'KB_x_getAll?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&jsonFields=' + $scope.x_o.forms[$scope.x_form].fieldsJSON + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&masterID=' + $scope.x_masterID + '&rowsPage=' + $scope.x_rowsPage + '&pageCt=' + $scope.x_pageCt, JSON.stringify($scope.xSearchSql)).then
-            (function (response) {
-                $scope.xList = response.data.rv;
-                if ($scope.xList.length > 0) {
-                    $scope.x_rowsMax = Math.round($scope.xList[0].rowCount / $scope.x_rowsPage + .5);
-                }
-                $scope.xInit();
-            }, function (err) {
-                alert("error navUp");
-                $scope.xList = [{}];
-            });
     };
 
     $scope.navDown = function (item) {
@@ -571,14 +571,32 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     $scope.xInit = function () {
-        $scope.xTree = {};
+        $scope.xEditFormDirty = false;
         $scope.x_page = "LIST";
+        $scope.xInitComplete();
+    };
+    $scope.xInitComplete = function () {
+        $scope.xTree = {};
         $http.post($scope.sloc + 'KB_x_getAll?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&jsonFields=' + $scope.x_o.forms[$scope.x_form].fieldsJSON + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&masterID=' + $scope.x_masterID + '&rowsPage=' + $scope.x_rowsPage + '&pageCt=' + $scope.x_pageCt, JSON.stringify($scope.xSearchSql)).then
             (function (response) {
                 $scope.xList = response.data.rv;
                 $scope.xTree = function () {
                     return {}; // ... build from $scope.xList
                 };
+                $scope.xTotal = {};
+                // calc totals for x_o.forms[x_forms].fieldsTotal
+                if($scope.x_o.forms[$scope.x_form].fieldsTotal !== undefined){
+                    var ttot = $scope.x_o.forms[$scope.x_form].fieldsTotal.split(",");
+                    for (var t in ttot) {
+                        var tot = 0;
+                        for (var v in $scope.xList) {
+                            if ($scope.xList[v].infoJSON[ttot[t]] !== undefined) { 
+                                tot += $scope.xList[v].infoJSON[ttot[t]] * 1; // numeric
+                            }
+                        }
+                        $scope.xTotal[ttot[t]] = tot;
+                    }
+                }      
                 if ($scope.xList.length > 0) {
                     if ($scope.x_rowsMax !== Math.round(response.data.rowCount / $scope.x_rowsPage + .5))
                         $scope.x_rowsMax = Math.round(response.data.rowCount / $scope.x_rowsPage + .5);
@@ -634,9 +652,12 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     $scope.xSave = function (f) {
         if ($scope.validateElement($scope.xElement.infoJSON, true)) {
-            var autoColumns = $scope.x_o.forms[$scope.x_form].fieldsAuto.split(",");
-            if($scope.xElement.ID === undefined && autoColumns.length > 0){     // insert only
-                $http.post($scope.sloc + 'KB_x_getAuto?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName, $scope.x_o.forms[$scope.x_form].fieldsAuto).then
+            var autoColumns = [];
+            if($scope.x_o.forms[$scope.x_form].fieldsAuto !== undefined && $scope.x_o.forms[$scope.x_form].fieldsAuto !== "" ) {
+                var autoColumns = $scope.x_o.forms[$scope.x_form].fieldsAuto.split(",");
+            }
+            if($scope.xElement.ID === "" && autoColumns.length > 0){     // insert only
+                $http.post($scope.sloc + 'KB_getAuto?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName, $scope.x_o.forms[$scope.x_form].fieldsAuto).then
                     (function (response) {
                         var av = response.data.split(","); 
                         for (v in autoColumns){
@@ -650,7 +671,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                         }
                     );
                         }, function (err) {
-                        alert("error doc " + JSON.stringify(err));
+                        alert("error auto " + JSON.stringify(err));
                     }
                 );
             } else {
@@ -697,16 +718,32 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                 alert("error 5");
             });
     };
-    $scope.chart = function (pfield) {
+    
+    $scope.copyTotal = function () {
+        var vp = $scope.x_o.forms[$scope.x_form].pages[$scope.x_page].copyTotal.split(" ");
+        if (vp.length !== 2) {return;}
+        var vfrom = vp[0];
+        var vto = vp[1];
+        var vfromValue = $scope.xTotal[vfrom];
+        var temp = $scope.x_n.pop(); // navUp to EDIT
+        $scope.retrievePrevious();
+        $scope.xEditFormDirty = true; // for manual save
+        $scope.xInitComplete();
+    };
+    
+    $scope.chart = function () {
+        $scope.x_o.forms[$scope.x_form].pages[$scope.x_page].graph = false;
         $http.post($scope.sloc + 'KB_chart?module=' + $scope.x_o.name, "dummy").then
             (function (response) {
                 var rv = response.data;
-                var w = window.open();
-                w.document.open("","chart");
+                var w = window.open("chart");
+                w.document.open("");
                 w.document.write(rv);
                 w.document.close();
+                $scope.x_o.forms[$scope.x_form].pages[$scope.x_page].graph = true;
             }, function (err) {
                 alert("chart error");
+                $scope.x_o.forms[$scope.x_form].pages[$scope.x_page].graph = true;
             }
         );
     };
@@ -718,14 +755,17 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         d_m.m=[]; // array of sorted master fields
         d_m.i=[]; // array of sorted child fields
         d_m.r={}; // object of ref tables with array of sorted ref fields
+        d_m.g={};
         d_m.xMaster=$scope.xElement.infoJSON;
         d_m.sql = ""; // select commands to retrieve child and ref data from db server, preceded by optional update command to link new children
         d_m.sqlS=[]; // sequence of ref tables read from db server to associate model dm.r[] with data retrieved
+        d_m.sqlG=[]; // sequence of grand children tables read from db server to associate model dm.g[] with data retrieved
         d_m.form=$scope.x_form;
         d_m.masterID = $scope.xElement.ID;
         var d_childName = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
+        var d_childSubForms = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].subForms;
         // order by 
-        var vob = "";
+        var vob = ""; // sort for child sql
         var x = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].orderBy.split(",");
         for (v in x) {
             if( vob !== "" ) { vob += " , ";}
@@ -739,25 +779,20 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                 vob += " DESC ";
             }
         }
-        if ($scope.x_o.forms[$scope.x_form].htmlDoc === undefined) {
-            d_m.htmlDoc="";
-        } else {
-            d_m.htmlDoc=$scope.x_o.forms[$scope.x_form].htmlDoc;
-        }
         d_m.sql += "SELECT * FROM " + $scope.x_o.name + "_" + d_childName + " WHERE masterID = '" + d_m.masterID + "' ORDER BY " + vob + " for json path;";
         var d_masterFields = $scope.x_o.forms[$scope.x_form].fieldsJSON;
         var d_masterLookups = $scope.x_o.forms[$scope.x_form].fieldsLookup;
         var d_childFields = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].fieldsJSON;
         d_m.childTotalFields = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].fieldsTotal;
-
+        // fill d_m.m
         var x = d_masterFields.split(",");
         for (var v in x) { d_m.m.push(x[v]); }
-
+        // fill d_m.i
         x = d_childFields.split(",");
         for (v in x) { 
             d_m.i.push(x[v]); 
         }
-
+        // fill d_m.r
         x = d_masterLookups.split(",");
         if ( x !== undefined){
             for (v in x) { 
@@ -774,6 +809,22 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                 d_m.r[lu].sort();
             }
         }
+        // fill d_m.g
+        x = d_childSubForms.split(",");
+        if ( x !== undefined){
+            for (v in x) { 
+                var sf = x[v];
+                var sft = $scope.x_o.forms[sf].tablesName;
+                d_m.sqlG.push(sf);
+                d_m.sql += "SELECT JSON_VALUE(a.infoJSON,'$.date') date, b.* from VS_" + d_childName + " a left join VS_" + sft + " b on a.ID = b.masterID where a.masterID = '" + d_m.masterID + "' ORDER BY JSON_VALUE(a.infoJSON,'$.date') for json path;";
+                var xx = $scope.x_o.forms[sf].fieldsJSON.split(",");
+                d_m.g[sf] = [];
+                if (xx !== undefined) {
+                    for (var vv in xx) { d_m.g[sf].push(xx[vv]); }
+                }
+                d_m.g[sf].sort();
+            }
+        }
         var d_id = [];  // shared ref keys master - child for filter 'combine' with no masterID
         var x1 = d_masterLookups.split(",");
         var x2 = d_childFields.split(",");
@@ -782,8 +833,8 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                 if(x1[v1] === x2[v2]){ d_id.push(x1[v1]); }
             }
         }
-        var s = "UPDATE " + $scope.x_o.name + "_" + $scope.x_o.forms[$scope.x_form].tablesName + " SET masterID = '" + d_m.masterID + "' WHERE masterID='' ";
-        for (var v in d_id){
+        var s = "UPDATE " + $scope.x_o.name + "_" + d_childName + " SET masterID = '" + d_m.masterID + "' WHERE masterID='' ";
+        for (var v in d_id){ 
             s += " and JSON_VALUE(infoJSON,'$." + d_id[v] + "') = '" + $scope.xElement.infoJSON[d_id[v]] + "'";
         }
         d_m.sql = d_m.sql + s + ";";        

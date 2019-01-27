@@ -34,6 +34,9 @@
             border: 2px solid red;
             border-radius: 5px;
         }
+        .alignRight {
+            text-align: right;
+        }
     </style>
 </head>
 
@@ -165,6 +168,8 @@
                 </div>
                 <div class="btn-group btn-group-justified">
                     <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
+                    <a href="#" class="btn btn-primary" ng-click="chart()" ng-show="x_o.forms[x_form].pages[x_page].graph">Chart</a>
+                    <a href="#" class="btn btn-primary" ng-click="copyTotal()" ng-show="x_o.forms[x_form].pages[x_page].copyTotal">copyTotal</a>
                 </div>
             </div>
 
@@ -184,7 +189,7 @@
                 <div class="form-group">
                     <br />
                     <div class="btn-group btn-group-justified">
-                        <a href="#" class="btn btn-primary" ng-click="xSave(xEditForm)" ng-show="xEditForm.$dirty">Save</a>
+                        <a href="#" class="btn btn-primary" ng-click="xSave(xEditForm)" ng-show="xEditForm.$dirty || xEditFormDirty ">Save</a>
                         <a href="#" class="btn btn-primary" ng-click="xCancel(xEditForm)">Cancel</a>
                         <a href="#" class="btn btn-primary" ng-click="xDelete(xEditForm)" ng-show="xElement.ID">Delete</a>
                         <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
