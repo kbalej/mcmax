@@ -94,7 +94,8 @@ function start(storedProcedure, response, postData, querystring, callback) {
                 case "KB_getAuto":
                     var vtable = querystring.module + "_" + querystring.table;
                     var vsq = "";
-                    x = postData.split(",");
+                    var vmax = [];
+                    var x = postData.split(",");
                     if (x !== undefined && x !== null) {
                         for (v in x) {
                             vsq += "SELECT max(CAST(JSON_VALUE(infoJSON,'$." + x[v] + "') AS int)) FROM " + vtable + ";";
@@ -108,7 +109,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     var request9 = new Request(vsq, function(err, rowCount, rows) {
                         if (err) {
                             response.writeHead(300, { "Content-Type": "text/plain" });
-                            response.write(JSON.stringify(err));
+                            response.write("bad request " + JSON.stringify(err));
                             response.end();
                             connection.close();
                         }
@@ -118,7 +119,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     });
                     request9.on('requestCompleted', function() {
                         response.writeHead(200, { "Content-Type": "text/plain" });
-                        response.write(JSON.stringify(vmax));
+                        response.write(vmax.toString());
                         response.end();
                         connection.close();
                     });
@@ -132,12 +133,29 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     vsql += "SUM(CAST(JSON_VALUE(infoJSON, '$.cost_NET') as numeric)) as Tnet FROM VS_invDetails WHERE JSON_VALUE(infoJSON, '$.service') <> 'Divers' ";
                     vsql += "AND CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) as int) > " + vlimit + " GROUP BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4), ";
                     vsql += "SUBSTRING(JSON_VALUE(infoJSON, '$.date'),6,2) ORDER BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4), SUBSTRING(JSON_VALUE(infoJSON, '$.date'),6,2) for json path;";
+                    
+                    vsql += "SELECT CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) as int) as nYear, SUM(CAST(JSON_VALUE(infoJSON, '$.cost_NET') as numeric)) as Tnet ";
+                    vsql += "FROM VS_invDetails WHERE JSON_VALUE(infoJSON, '$.service') <> 'Divers' GROUP BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) ";
+                    vsql += "ORDER BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) for json path;"
+                    
+                    vsql += "SELECT JSON_VALUE(infoJSON, '$.service') as Service, SUM(CAST(JSON_VALUE(infoJSON, '$.cost_NET') as numeric)) as Tnet ";
+                    vsql += "FROM VS_invDetails GROUP BY JSON_VALUE(infoJSON, '$.service') ORDER BY JSON_VALUE(infoJSON, '$.service') for json path";
+                    
                     var request7 = new Request(vsql, function() {});
                     request7.on('row', function(rows) {
                         vrows += rows[0].value;
                     });
                     request7.on('requestCompleted', function() {
-                        postData = postData.replace("//data//", vrows);
+                        var t = vrows.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
+                        t = "[" + t.replace("}][{", "}],[{") + "]";
+                        var tt = JSON.parse(t);
+                        console.log(JSON.stringify(tt));
+
+                        postData = postData.replace("//data//", JSON.stringify(tt[0]));
+                        postData = postData.replace("//data1//", JSON.stringify(tt[1]));
+                        postData = postData.replace("//data2//", JSON.stringify(tt[2]));
+
                         response.writeHead(200, { "Content-Type": "text/plain" });
                         response.write(postData); 
                         response.end();

@@ -133,10 +133,15 @@ function start(x_o) {
             if (p.substring(0, 4) === "LIST") {
                 var vh = "";
                 var vd = "";
+                var vt = "";
                 for (var fi in x_o.forms[f].pages[p].fields) {
                     c = ca[x_o.forms[f].pages[p].fields[fi].columnsID];
                     if (c.fieldType !== undefined) {
-                        vh += "<th ng-click=\"orderByMe('" + c.name + "')\">" + c.label + "</th>";
+                        if (c.fieldType === 'number') {
+                            vh += "<th class='alignRight' ng-click=\"orderByMe('" + c.name + "')\">" + c.label + "</th>";
+                        } else {
+                            vh += "<th ng-click=\"orderByMe('" + c.name + "')\">" + c.label + "</th>";
+                        }
                         if (c.source !== undefined && c.fieldType === "lookup" && c.source === "table") {
                             vd += "<td ng-bind='item.infoJSON." + c.lookup + "Name'></td>";
                         } else if (c.fieldType === "email") {
@@ -165,6 +170,11 @@ function start(x_o) {
                             }
                         }
                     }
+                    if (c.totalNumber) {
+                        vt += "<td class='alignRight'><span ng-bind='xTotal." + c.name + " | number : 2'></span></td>";
+                    } else {
+                        vt += "<td></td>";
+                    }
                 }
                 vd += "<td><a href=\"#\" ng-click=\"xView(item)\"><span class=\"glyphicon glyphicon-eye-open\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,Number(item.sequence) - 15)\"><span class=\"glyphicon glyphicon-arrow-up\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,Number(item.sequence) + 15)\"><span class=\"glyphicon glyphicon-arrow-down\"></span></a></td>";
                 vhtmlList += "<div ng-switch-when='" + x_o.forms[f].pages[p].name + x_o.forms[f].name + "'>";
@@ -174,7 +184,7 @@ function start(x_o) {
                 } else {
                     vhtmlList += "<tr ng-repeat='item in xList  | orderBy:myOrderBy'>" + vd;
                 }
-                vhtmlList += "</tr></tbody></table></div>";
+                vhtmlList += "</tr></tbody><tfoot><tr>" + vt + "</tr></tfoot></table></div>";
             }
 
             //   if (p.substring(0, 4) === "VIEW") { }
