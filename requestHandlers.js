@@ -6,9 +6,16 @@ var buildFE = require("./buildFE");
 
 function login(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'login' was called.");
-    response.writeHead(200, { "Content-Type": "text/plain" });
-    response.write("OK");
-    response.end();
+    var v = JSON.parse(postData)
+    if(v.usrname == 'k' && v.password == 'k') {
+        response.writeHead(200, { "Content-Type": "text/plain" });
+        response.write("OK");
+        response.end();
+    } else {
+        response.writeHead(300, { "Content-Type": "text/plain" });
+        response.write("NOK");
+        response.end();
+    }
 }
 function KB_x_getAll(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'KB_x_getAll' was called.");
@@ -36,7 +43,7 @@ function KB_doc(response, postData, pathname, querystring, request, dbh) {
     fs.readFile(__dirname + "/doc/doc" + d_m.form + ".txt", 'utf8', function(err,data) {
         if(err) {
             // build html with references to data model
-            var v, vitem11="", vheader="", vbody="", vfooter="";
+            var v, vitem11="", vheader="", vbody="", vfooter="", vgrandchildren = "";
             for (v in d_m.m){
                 vitem11 += "{{dm.m." + d_m.m[v] + "}}";
             }
@@ -45,6 +52,19 @@ function KB_doc(response, postData, pathname, querystring, request, dbh) {
             }
             for (v in d_m.r){
                 d_m.r[v].forEach(getArrayElements);
+            }
+            function getArrayElementsHeader(value,index,array) {
+                vgrandchildren += "<th>" + d_m.g[v][value] + "</th>";
+            }
+            function getArrayElementsBody(value,index,array) {
+                vgrandchildren += "<td>{{body." + d_m.g[v][value] + "}}</td>";
+            }
+            for (v in d_m.g){
+                vgrandchildren += "<hr><hr><hr>" + d_m.g[v] + "<table><thead><tr><th>date</th>";  // date as link
+                d_m.g[v].forEach(getArrayElementsHeader);
+                vgrandchildren += "</tr></thead><tbody><tr ng-repeat='body in dm.g[v]'><td><td>{{body.date}}</td></td>";  // date as link
+                d_m.g[v].forEach(getArrayElementsBody);
+                vgrandchildren += "</tr></table>";
             }
             for (v in d_m.i){
                 vheader += "<th>" + d_m.i[v] + "</th>";
@@ -62,6 +82,7 @@ function KB_doc(response, postData, pathname, querystring, request, dbh) {
                     v = v.replace("<!--heading-->", vheader);
                     v = v.replace("<!--body-->", vbody);
                     v = v.replace("<!--footer-->", vfooter);
+                    v = v.replace("<!--grandchildren-->", vgrandchildren);
                     d_m.htmlDoc=v;
                     fs.writeFile(__dirname + "/doc/doc" + d_m.form + ".txt", v, "utf8", function(err, data) {
                         dbh.start("KB_doc", response, JSON.stringify(d_m), querystring);
