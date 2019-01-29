@@ -2,7 +2,7 @@ var mmApp = angular.module("mmApp", ['ngSanitize']);
 mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     //$scope.x_o//
-    $scope.sloc="http://172.22.22.64:8888/"; // node on Max Server
+    $scope.sloc="http://172.22.22.51:8888/"; // node on Max Server
     $scope.floc="file:///home/kb/Documents/p/UploadedFiles/UploadedFiles/";
     //$scope.sloc="http://localhost:8888/";  // node on Asus
     //$scope.floc="file:///Users/Admin/Onedrive/p_A/UploadedFiles/";
@@ -381,7 +381,6 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         if ($scope.x_o.forms[$scope.x_form].rowsPage !== undefined) { $scope.x_rowsPage = $scope.x_o.forms[$scope.x_form].rowsPage;}
         $scope.x_pageCt = 1;
         $scope.x_masterID = "";
-        $scope.x_masterName = "";
         $scope.x_n = [];
         $scope.myOrderBy = undefined;
         $scope.xSearchListTitle = "";
@@ -396,15 +395,14 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         while (temp.form !== item.form || temp.form === "") {
             temp = $scope.x_n.pop();
         }
-        $scope.retrievePrevious();
+        $scope.retrievePrevious(temp);
         $scope.x_page = "LIST";  // navUp to LIST, not EDIT
         $scope.xEditFormDirty = false;
         $scope.xInitComplete();
     };
 
-    $scope.retrievePrevious = function () {
+    $scope.retrievePrevious = function (temp) {
         $scope.x_masterID = temp.masterID;
-        $scope.x_masterName = temp.masterName;
         $scope.x_form = temp.form;
         if ($scope.x_o.forms[$scope.x_form].rowsPage !== undefined) { $scope.x_rowsPage = $scope.x_o.forms[$scope.x_form].rowsPage;}
         $scope.x_pageCt = temp.pageCt;
@@ -418,9 +416,8 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     $scope.navDown = function (item) {
-        $scope.x_n.push({ "form": $scope.x_form, "page": $scope.x_page, "masterID": $scope.x_masterID, "masterName": $scope.x_masterName, "pageCt": $scope.x_pageCt, "xSearch": Object.assign({}, $scope.xSearch), "xSearchListTitle": $scope.xSearchListTitle, "xSearchSql": $scope.xSearchSql, "xElement": Object.assign({}, $scope.xElement) });
+        $scope.x_n.push({ "form": $scope.x_form, "page": $scope.x_page, "masterID": $scope.x_masterID, "pageCt": $scope.x_pageCt, "xSearch": Object.assign({}, $scope.xSearch), "xSearchListTitle": $scope.xSearchListTitle, "xSearchSql": $scope.xSearchSql, "xElement": Object.assign({}, $scope.xElement) });
         $scope.x_masterID = $scope.xElement.ID;
-        $scope.x_masterName = $scope.xElement.infoJSON.name;
         $scope.x_form = item;
         if ($scope.x_o.forms[$scope.x_form].rowsPage !== undefined) { $scope.x_rowsPage = $scope.x_o.forms[$scope.x_form].rowsPage;}
         $scope.x_pageCt = 1;
@@ -726,7 +723,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         var vto = vp[1];
         var vfromValue = $scope.xTotal[vfrom];
         var temp = $scope.x_n.pop(); // navUp to EDIT
-        $scope.retrievePrevious();
+        $scope.retrievePrevious(temp);
         $scope.xEditFormDirty = true; // for manual save
         $scope.xInitComplete();
     };

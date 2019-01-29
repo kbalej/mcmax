@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>McMax</title>
@@ -34,9 +34,48 @@
             border: 2px solid red;
             border-radius: 5px;
         }
+        
         .alignRight {
             text-align: right;
         }
+
+        .mainMenu {
+            grid-area: mainMenu;
+        }
+
+        .logo {
+            grid-area: logo;
+        }
+
+        .path {
+            grid-area: path;
+        }
+
+        .down {
+            grid-area: down;
+        }
+
+        .current {
+            grid-area: current;
+            background-color: yellow;
+        }
+
+        .pageTabs {
+            grid-area: pageTabs;
+            background-color: lightblue;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-areas: 'logo mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu' 'logo current path path path path path down down down down down' 'pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs';
+            grid-gap: 1px;
+            padding: 1px;
+        }
+
+            .grid-container > div {
+                text-align: left;
+                padding: 0px 0;
+            }
     </style>
 </head>
 
@@ -72,65 +111,44 @@
 
         <div class="container" ng-show="x_page && x_page != 'LOGIN'">
 
-            <!--NAVBAR -->
-
-            <nav class="navbar navbar-inverse" ng-show="xEditForm.$pristine && x_n.length < 1">
-                <div class="container-fluid">
-                    <div class="navbar-header">
-                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#NavbarMain">
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                        </button>
-                        <a class="navbar-brand" href="#">{{x_o.name}}</a>
-                    </div>
-                    <div>
-                        <div class="collapse navbar-collapse" id="NavbarMain">
-                            <ul class="nav navbar-nav" ng-show="xEditForm.$pristine" ng-repeat="i in x_o.forms">
-                                <li ng-show="!i.parent"><a href="#" ng-click="navMain(i.name)">{{i.name}}</a></li>
-                            </ul>
-                        </div>
-                    </div>
+            <div class="grid-container">
+                <div class="logo">
+                    <center><img src="http://www.verbierservices.net/images/McMax.jpg" width="90" border="0" /></center>
                 </div>
-            </nav>
-            <nav class="navbar navbar-inverse" ng-show="xEditForm.$pristine && x_n.length > 0">
-                <div class="container-fluid">
-                    <div class="navbar-header">
-                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#NavbarUp">
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                        </button>
-                        <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-arrow-up"></span></a>
+                <div class="mainMenu">
+                    <a class="navbar-brand" href="#">{{x_o.name}}</a>
+                    <ul class="nav navbar-nav" ng-show="xEditForm.$pristine" ng-repeat="i in x_o.forms">
+                        <li ng-show="!i.parent"><a href="#" ng-click="navMain(i.name)">{{i.name}}</a></li>
+                    </ul>
+                </div>
+                <div class="path">
+                    <a class="navbar-brand" ng-show="xEditForm.$pristine && x_n.length > 0" href="#"><span class="glyphicon glyphicon-arrow-up"></span></a>
+                    <ul class="nav navbar-nav" ng-show="xEditForm.$pristine && x_n.length > 0" ng-repeat="i in x_n">
+                        <li><a href="#" ng-click="navUp(i)">{{i.form}}</a></li>
+                    </ul>
+                </div>
+                <div class="down" ng-show="xEditForm.$pristine && x_page.substring(0, 4) === 'EDIT' && x_o.forms[x_form].subForms.length > 0">
+                    <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-arrow-down"></span></a>
+                    <ul class="nav navbar-nav" ng-show="xEditForm.$pristine && x_o.forms[x_form].subForms.length > 0" ng-repeat="i in x_o.forms[x_form].subForms">
+                        <li><a href="#" ng-click="navDown(i)">{{i}}</a></li>
+                    </ul>
+                </div>
+                <div class="current">
+                        <center>{{x_form}} {{x_page}}</center>
+                </div>
+                <div class="pageTabs">
+                    <div ng-show="x_page.substring(0, 4) === 'LIST'">
+                        <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].pages">
+                            <li ng-show="i.name == 'LIST'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
+                        </ul>
                     </div>
-                    <div class="collapse navbar-collapse" id="NavbarUp">
-                        <ul class="nav navbar-nav" ng-show="xEditForm.$pristine && x_n.length > 0" ng-repeat="i in x_n">
-                            <li><a href="#" ng-click="navUp(i)">{{i.form}}</a></li>
+                    <div ng-show="x_page.substring(0, 4) === 'EDIT'">
+                        <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].pages">
+                            <li ng-show="i.name == 'EDIT'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
                         </ul>
                     </div>
                 </div>
-            </nav>
-
-            <nav class="navbar navbar-default" ng-show="x_page.substring(0, 4) == 'LIST'">
-                <div class="container-fluid">
-                    <div class="navbar-header">
-                        <a class="navbar-brand" href="#">{{x_form}}: </a>
-                    </div>
-                    <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].pages">
-                        <li ng-show="i.name.substring(0,4) == 'LIST'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
-                    </ul>
-                </div>
-            </nav>
-            <nav class="navbar navbar-default" ng-show="x_page.substring(0, 4) == 'EDIT'">
-                <div class="container-fluid">
-                    <div class="navbar-header">
-                        <a class="navbar-brand" href="#">{{x_form}}: </a>
-                    </div>
-                    <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].pages">
-                        <li ng-show="i.name.substring(0,4) == 'EDIT'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
-                    </ul>
-                </div>
-            </nav>
+            </div>
 
             <div id="Googlemap" ng-show="x_o.forms[x_form].fieldsMap && x_o.forms[x_form].fieldsMap.length > 0 && x_page.substring(0, 7) == 'EDITmap'" style="height: 500px; width: 100%;"></div>
 
@@ -155,21 +173,17 @@
 
             <div class="panel" ng-show="x_page.substring(0, 4) == 'LIST' && x_page != 'LISTDOCUMENT' && x_page != 'LISTGRAPH' && x_page != 'LISTCAROUSEL' && x_page != 'LISTTREE'">
                 <span ng-show="x_o.forms[x_form].search">{{xSearchListTitle}}</span> <span ng-show="myOrderBy"> Order by {{myOrderBy.substring(9)}}</span>
-                <div class="input-group">
-                    <span class="input-group-btn">
-                        <input type="range" name="points" min="1" max="{{x_rowsMax}}" step="1" ng-model="x_pageCt" ng-change="xInit()">
-                        <button ng-click="xAdd()" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span> {{x_masterName}} </button>
-                    </span>
+                <input type="range" name="points" min="1" max="{{x_rowsMax}}" step="1" ng-model="x_pageCt" ng-change="xInit()">
+                <div class="btn-group btn-group-justified">
+                    <button ng-click="xAdd()" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
+                    <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
+                    <a href="#" class="btn btn-primary" ng-click="chart()" ng-show="x_o.forms[x_form].pages[x_page].graph">Chart</a>
+                    <a href="#" class="btn btn-primary" ng-click="copyTotal()" ng-show="x_o.forms[x_form].pages[x_page].copyTotal">copyTotal</a>
                 </div>
                 <div id="listItems" ng-switch='x_page + x_form'>
 
                     <!--htmlList-->
 
-                </div>
-                <div class="btn-group btn-group-justified">
-                    <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
-                    <a href="#" class="btn btn-primary" ng-click="chart()" ng-show="x_o.forms[x_form].pages[x_page].graph">Chart</a>
-                    <a href="#" class="btn btn-primary" ng-click="copyTotal()" ng-show="x_o.forms[x_form].pages[x_page].copyTotal">copyTotal</a>
                 </div>
             </div>
 
@@ -189,7 +203,7 @@
                 <div class="form-group">
                     <br />
                     <div class="btn-group btn-group-justified">
-                        <a href="#" class="btn btn-primary" ng-click="xSave(xEditForm)" ng-show="xEditForm.$dirty || xEditFormDirty ">Save</a>
+                        <a href="#" class="btn btn-primary" ng-click="xSave(xEditForm)" ng-show="xEditForm.$dirty">Save</a>
                         <a href="#" class="btn btn-primary" ng-click="xCancel(xEditForm)">Cancel</a>
                         <a href="#" class="btn btn-primary" ng-click="xDelete(xEditForm)" ng-show="xElement.ID">Delete</a>
                         <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
@@ -212,30 +226,11 @@
                     </div>
                 </div>
             </form>
-
-            <nav class="navbar navbar-inverse" ng-show="xEditForm.$pristine && x_o.forms[x_form].subForms.length > 0 && ( x_page.substring(0,4) == 'EDIT' || x_page.substring(0,4) == 'VIEW' )  && xElement.ID != ''">
-                <div class="container-fluid">
-                    <div class="navbar-header">
-                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#NavbarDown">
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                        </button>
-                        <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-arrow-down"></span></a>
-                    </div>
-                    <div class="collapse navbar-collapse" id="NavbarDown">
-                        <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].subForms">
-                            <li><a href="#" ng-click="navDown(i)">{{i}}</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-
         </div>
     </div>
 
     <script>
-                //Script.js//
+                        //Script.js//
     </script>
 
 </body>
