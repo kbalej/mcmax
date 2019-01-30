@@ -2,7 +2,7 @@ var mmApp = angular.module("mmApp", ['ngSanitize']);
 mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     //$scope.x_o//
-    $scope.sloc="https://balej.w13.test-acc.com:8888/"; // node on Max Server
+    $scope.sloc="http://balej.w13.test-acc.com:8888/"; // node on Max Server
     $scope.floc="file:///httpdocs/UploadedFiles/UploadedFiles/";
     //$scope.sloc="http://172.22.22.51:8888/"; // node on Max Server
     //$scope.floc="file:///home/kb/Documents/p/UploadedFiles/UploadedFiles/";
