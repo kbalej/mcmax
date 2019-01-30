@@ -18,7 +18,8 @@ function start(route, handle,dbh) {
             });
         }
     }
-    http.createServer(onRequest).listen(8888, "0.0.0.0");
+    var port=process.env.PORT || 8888;
+    http.createServer(onRequest).listen(port, "0.0.0.0");
     console.log("Server has started.");
 }
 exports.start = start;
