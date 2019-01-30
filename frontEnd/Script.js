@@ -2,8 +2,10 @@ var mmApp = angular.module("mmApp", ['ngSanitize']);
 mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     //$scope.x_o//
-    $scope.sloc="http://172.22.22.51:8888/"; // node on Max Server
-    $scope.floc="file:///home/kb/Documents/p/UploadedFiles/UploadedFiles/";
+    $scope.sloc="https://balej.w13.test-acc.com:8888/"; // node on Max Server
+    $scope.floc="file:///httpdocs/UploadedFiles/UploadedFiles/";
+    //$scope.sloc="http://172.22.22.51:8888/"; // node on Max Server
+    //$scope.floc="file:///home/kb/Documents/p/UploadedFiles/UploadedFiles/";
     //$scope.sloc="http://localhost:8888/";  // node on Asus
     //$scope.floc="file:///Users/Admin/Onedrive/p_A/UploadedFiles/";
     // build load function
