@@ -54,17 +54,17 @@ function KB_doc(response, postData, pathname, querystring, request, dbh) {
                 d_m.r[v].forEach(getArrayElements);
             }
             function getArrayElementsHeader(value,index,array) {
-                vgrandchildren += "<th>" + d_m.g[v][value] + "</th>";
+                vgrandchildren += "<th>" + value + "</th>";
             }
             function getArrayElementsBody(value,index,array) {
-                vgrandchildren += "<td>{{body." + d_m.g[v][value] + "}}</td>";
+                vgrandchildren += "<td>{{body." + value + "}}</td>";
             }
             for (v in d_m.g){
-                vgrandchildren += "<hr><hr><hr>" + d_m.g[v] + "<table><thead><tr><th>date</th>";  // date as link
+                vgrandchildren += "<hr><hr><hr><div ng-show='d_m.g." + v + ".length()>0'>Annex: " + v + "<table><thead><tr><th>date</th>";  // date as link
                 d_m.g[v].forEach(getArrayElementsHeader);
-                vgrandchildren += "</tr></thead><tbody><tr ng-repeat='body in dm.g[v]'><td><td>{{body.date}}</td></td>";  // date as link
+                vgrandchildren += "</tr></thead><tbody><tr ng-repeat='body in dm.g[v]'><td>{{body.date}}</td>";  // date as link
                 d_m.g[v].forEach(getArrayElementsBody);
-                vgrandchildren += "</tr></table>";
+                vgrandchildren += "</tr></table></div>";
             }
             for (v in d_m.i){
                 vheader += "<th>" + d_m.i[v] + "</th>";

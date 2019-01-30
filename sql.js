@@ -29,7 +29,20 @@ var cvt1 = function(result) {
     }
     return o;
 };
-
+var cvt2 = function(result) {
+    var o = [];
+    for (var x in result) {
+        try {
+            var t = JSON.parse(result[x].date);
+            result[x] = JSON.parse(result[x].infoJSON);
+            result[x]["date"] = t;
+        } catch (e) {
+            console.log(result[x].infoJSON + "  xxxxxxxxxxxxxx " + x);
+        }
+        o.push(result[x]);
+    }
+    return o;
+};
 function start(storedProcedure, response, postData, querystring, callback) {
     var config = sss.start().sql;
     var rv = "OK";
@@ -175,6 +188,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         var om = {};
                         om.m = ooo.xMaster; // load m
                         om.r = {};
+                        om.g = {};
                         var t = vrows.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
@@ -184,7 +198,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         t = "[" + t.replace("}][{", "}],[{") + "]";
                         var tt = JSON.parse(t);
                         // load i
-                        om.i = cvt1(tt[0]); // []
+                        om.i = cvt1(tt[0]); // [] first select after update
                         // calc footer totals for each total column, eg om.if.cost
                         om.if = {};
                         var ttot = ooo.childTotalFields.split(",");
@@ -198,9 +212,19 @@ function start(storedProcedure, response, postData, querystring, callback) {
                             om.if[ttot[t]] = tot;
                         }
                         // load r 
-                        var ct = 1;
+                        var ct = 1;   // select sequene for r + g in tt, important 
                         for (x in ooo.sqlS) {
                             om.r[ooo.sqlS[x]] = cvt1(tt[ct])[0];
+                            ct += 1;
+                        }
+                        // load g 
+                        for (x in ooo.sqlG) {
+                            if(tt[ct] !== undefined) {
+                                console.log(JSON.stringify(tt[ct]));
+                                om.g[ooo.sqlG[x]] = cvt2(tt[ct])[0];
+                            } else {
+                                om.g[ooo.sqlG[x]] = [{}];
+                            }
                             ct += 1;
                         }
                         // write doc<form><ID> file
