@@ -760,7 +760,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         d_m.form=$scope.x_form;
         d_m.masterID = $scope.xElement.ID;
         var d_childName = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
-        var d_childSubForms = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].subForms;
+        var d_childSubForms = $scope.x_o.forms[$scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].name].subForms;
         // order by 
         var vob = ""; // sort for child sql
         var x = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].orderBy.split(",");
@@ -807,13 +807,13 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             }
         }
         // fill d_m.g
-        x = d_childSubForms.split(",");
+        x = d_childSubForms;
         if ( x !== undefined){
             for (v in x) { 
                 var sf = x[v];
                 var sft = $scope.x_o.forms[sf].tablesName;
                 d_m.sqlG.push(sf);
-                d_m.sql += "SELECT JSON_VALUE(a.infoJSON,'$.date') date, b.* from VS_" + d_childName + " a left join VS_" + sft + " b on a.ID = b.masterID where a.masterID = '" + d_m.masterID + "' ORDER BY JSON_VALUE(a.infoJSON,'$.date') for json path;";
+                d_m.sql += "SELECT JSON_VALUE(a.infoJSON,'$.date') date, b.* from VS_" + d_childName + " a inner join VS_" + sft + " b on a.ID = b.masterID where a.masterID = '" + d_m.masterID + "' ORDER BY JSON_VALUE(a.infoJSON,'$.date') for json path;";
                 var xx = $scope.x_o.forms[sf].fieldsJSON.split(",");
                 d_m.g[sf] = [];
                 if (xx !== undefined) {
@@ -835,10 +835,8 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             s += " and JSON_VALUE(infoJSON,'$." + d_id[v] + "') = '" + $scope.xElement.infoJSON[d_id[v]] + "'";
         }
         d_m.sql = d_m.sql + s + ";";        
-
         d_m.m.sort();
         d_m.i.sort();
-
         $http.post($scope.sloc + 'KB_doc?module=' + $scope.x_o.name, JSON.stringify(d_m)).then
             (function (response) {
                 $scope.xElement.infoJSON[pfield] = response.data; // eg docinv1111-2222-3333
