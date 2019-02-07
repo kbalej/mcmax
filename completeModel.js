@@ -30,6 +30,7 @@ function start(x_o) {
         var vFieldsAuto = "";
         var vFieldsCheckbox = "";
         var vFieldsMap = "";
+        var vFieldsImage = "";
         var vFieldsLookup = ""; // field names,
         if (x_o.forms[f].parent !== undefined) {
             x_o.forms[x_o.forms[f].parent].subForms.push(x_o.forms[f].name);
@@ -276,15 +277,17 @@ function start(x_o) {
                                     vhtmlEdit += "<a href='{{sloc}}{{xElement.infoJSON." + c.name + "}}.html' target='_blank'> {{xElement.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='doc(\"" + c.name + "\")' value='create doc and save' >";
                                     break;
                                 case "lookup":
-                                    vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
                                     if (c.source === "table") {
+                                        vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "'";
                                         if (c.lookupFields == undefined) { c.lookupFields = '' }
-                                        vhtmlEdit += " ng-change=\"completeLookupField('xElement',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "')\" ng-options='it.ID as it.infoJSON.name for it in x_o.lookups." + c.lookup + ".collection'";
+                                        vhtmlEdit += " ng-change=\"treeClick(xElement.infoJSON." + c.name + ");completeLookupField('xElement',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "');\" >";
+                                        vhtmlEdit += "<OPTION ng-repeat='item in x_o.lookups[" + c.lookup + "].tree1' value='{{item.ID}}' ng-selected='item.sel' /> ";
+                                        vhtmlEdit += "{{spacesListTree(item.level)}} {{item.name}}";
                                     }
                                     if (c.source === "model") {
-                                        vhtmlEdit += " ng-options='" + c.modelPath + "'";
+                                        vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
+                                        vhtmlEdit += " ng-options='" + c.modelPath + "' >";
                                     }
-                                    vhtmlEdit += " >";
                                     if (c.specific !== undefined) {
                                         result = c.specific.match(/\w+/g);
                                         for (x in result) {
@@ -295,7 +298,7 @@ function start(x_o) {
                                             }
                                         }
                                     }
-                                    vhtmlEdit += "</select >";
+                                    vhtmlEdit += "</select>";
                                     break;
                             }
                         }
@@ -308,6 +311,9 @@ function start(x_o) {
                         if (c.fieldType === "map") {
                             if (!vFieldsMap.includes(c.name)) { vFieldsMap += c.name + ","; }
                         }
+                        if (c.fieldType === "image") {
+                            if (!vFieldsImage.includes(c.name)) { vFieldsImage += c.name + ","; }
+                        }
                         if (c.fieldType === "lookup" && c.source === "table") {
                             if (!vFieldsLookup.includes(c.name)) { vFieldsLookup += c.name + ","; }
                             if (!vFieldsLookup2.includes(c.lookup)) {
@@ -316,7 +322,7 @@ function start(x_o) {
                                 x_o.lookups[c.lookup] = {};
                                 x_o.lookups[c.lookup].name = c.lookup;
                                 x_o.lookups[c.lookup].getParameters = c.lookup + "&orderBy=" + x_o.forms[c.lookup].orderBy;
-                                x_o.lookups[c.lookup].collection = [{}];
+                                x_o.lookups[c.lookup].collection = [];
                                 x_o.lookups[c.lookup].masterLookup = c.masterLookup;
                                 // load function defined in Script.js
                             }
@@ -331,7 +337,8 @@ function start(x_o) {
         x_o.forms[f].fieldsTotal = removeTrailingComma(vFieldsTotal);
         x_o.forms[f].fieldsAuto = removeTrailingComma(vFieldsAuto);
         x_o.forms[f].fieldsCheckbox = removeTrailingComma(vFieldsCheckbox);
-        x_o.forms[f].fieldsMap = removeTrailingComma(vFieldsMap);
+        x_o.forms[f].fieldsMap = removeTrailingComma(vFieldsMap)
+        x_o.forms[f].fieldsImage = removeTrailingComma(vFieldsImage)
         x_o.forms[f].fieldsLookup = removeTrailingComma(vFieldsLookup);
     }
     x_o.htmlSearch = vhtmlSearch;

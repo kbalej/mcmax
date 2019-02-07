@@ -1,6 +1,6 @@
 ﻿var fs = require('fs');
 var formidable = require("formidable");
-var uuid = require('node-uuid');
+var uuid = require('uuid/v1');
 var buildFE = require("./buildFE");
 
 
@@ -108,6 +108,21 @@ function KB_chart(response, postData, pathname, querystring, request, dbh) {
         }
     });
 }
+function KB_carousel(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_carousel' was called.");
+    fs.readFile(__dirname + "/doc/carousel.html", 'utf8', function(err,data) {
+        if(err){
+            response.writeHead(300, { "Content-Type": "text/plain" });
+            response.write("carousel.html error");
+            response.end();
+        } else {
+            var h = data.replace("//model//",postData);
+            response.writeHead(200, { "Content-Type": "text/plain" });
+            response.write(h);
+            response.end();
+        }
+    });
+}
 function upload(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'upload' was called.");
     var form = new formidable.IncomingForm();
@@ -132,21 +147,26 @@ function load(response, postData, pathname, querystring, request, dbh) {
 }
 function KB_showFile(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'KB_showFile' was called.");
-    var floc = __dirname + "/doc/";
-    fs.readFile(floc + pathname, 'utf8',
-        function (err, data) {
-            if (err) {
-                response.writeHead(300, { "Content-Type": "text/plain" });
-                response.write("file not loaded");
-                response.end();
-            } else {
-                response.writeHead(200, { "Content-Type": "text/html" });
-                response.write(data);
-                response.end();
+    if(pathname == undefined || pathname == "") {
+        response.writeHead(300, { "Content-Type": "text/html" });
+        response.write("missing path");
+        response.end();
+    } else {
+        var floc = __dirname + "/doc/";
+        fs.readFile(floc + pathname, 'utf8',
+            function (err, data) {
+                if (err) {
+                    response.writeHead(300, { "Content-Type": "text/plain" });
+                    response.write("file not loaded");
+                    response.end();
+                } else {
+                    response.writeHead(200, { "Content-Type": "text/html" });
+                    response.write(data);
+                    response.end();
+                }
             }
-        }
-    );
-
+        );
+    }
 }
 exports.upload = upload;
 exports.load = load;
@@ -158,4 +178,5 @@ exports.KB_x_sequencePut = KB_x_sequencePut;
 exports.KB_getAuto = KB_getAuto;
 exports.KB_doc = KB_doc;
 exports.KB_chart = KB_chart;
+exports.KB_carousel = KB_carousel;
 exports.KB_showFile = KB_showFile;
