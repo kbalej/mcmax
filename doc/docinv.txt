@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>McMax</title>
+<title>McMax FACTURE</title>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
@@ -134,22 +134,19 @@ délai: <span>{{dm.m.date | kDateAddFromDateISO8601 : 10 | date:'dd.MM.yyyy'}}</
 </tr>
 </tfoot>
 </table>
-<hr>
 <center>created by McMax.biz, Val de Bagnes</center>
-
-<hr><hr><hr>
+<hr><hr>
 <div ng-show='d_m.g.ldryDetails1.length()>0'>
-Annex: ldryDetails1
+Annexe: LINGE
 <table>
 <thead>
 <tr>
-<th>date</th>
-<th>cost</th>
-<th>description</th>
-<th>ldryID</th>
-<th>ldryName</th>
-<th>quantity</th>
-<th>unitCost</th>
+<th></th>
+<th></th>
+<th></th>
+<th>quté</th>
+<th>p.unitaire</th>
+<th>prix</th>
 </tr>
 </thead>
 <tbody>
