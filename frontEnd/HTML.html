@@ -137,14 +137,14 @@
                         <center>{{x_form}} {{x_page}}</center>
                 </div>
                 <div class="pageTabs">
-                    <div ng-show="x_page.substring(0, 4) === 'LIST'">
+                    <div ng-show="x_page == 'LIST' || x_page == 'TREE'">
                         <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].pages">
-                            <li ng-show="i.name == 'LIST'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
+                            <li ng-show="i.name == 'LIST' || i.name == 'TREE'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
                         </ul>
                     </div>
                     <div ng-show="x_page.substring(0, 4) === 'EDIT'">
                         <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].pages">
-                            <li ng-show="i.name == 'EDIT'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
+                            <li ng-show="i.name.substring(0, 4) == 'EDIT'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
                         </ul>
                     </div>
                 </div>
@@ -171,13 +171,14 @@
 
             <!--LIST-->
 
-            <div class="panel" ng-show="x_page.substring(0, 4) == 'LIST' && x_page != 'LISTDOCUMENT' && x_page != 'LISTGRAPH' && x_page != 'LISTCAROUSEL' && x_page != 'LISTTREE'">
+            <div class="panel" ng-show="x_page.substring(0, 4) == 'LIST'">
                 <span ng-show="x_o.forms[x_form].search">{{xSearchListTitle}}</span> <span ng-show="myOrderBy"> Order by {{myOrderBy.substring(9)}}</span>
                 <input type="range" name="points" min="1" max="{{x_rowsMax}}" step="1" ng-model="x_pageCt" ng-change="xInit()">
                 <div class="btn-group btn-group-justified">
                     <button ng-click="xAdd()" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
                     <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
                     <a href="#" class="btn btn-primary" ng-click="chart()" ng-show="x_o.forms[x_form].pages[x_page].graph">Chart</a>
+                    <a href="#" class="btn btn-primary" ng-click="carousel()" ng-show="x_o.forms[x_form].pages[x_page].carousel">Carousel</a>
                     <a href="#" class="btn btn-primary" ng-click="copyTotal()" ng-show="x_o.forms[x_form].pages[x_page].copyTotal">copyTotal</a>
                 </div>
                 <div id="listItems" ng-switch='x_page + x_form'>
@@ -186,10 +187,21 @@
 
                 </div>
             </div>
+            
+            
+            <!--TREE not form specific, creates 3D by setting parentID-->
 
-            <!--LISTTREE-->
-
-            <div class="panel" ng-show="x_page == 'LISTTREE'">
+            <div class="panel" ng-show="x_page == 'TREE'">
+                <div class="btn-group btn-group-justified">
+                    <a href="#" class="btn btn-primary" ng-click="treeCollapse()">collapse all</a>
+                    <a href="#" class="btn btn-primary" ng-click="treeExpand()">show all</a>
+                </div>
+                <hr>
+                <table>
+                    <tr ng-repeat='item in xTree' id='{{item.ID}}' ng-show='item.show' ondrop='drop(event)' ondragover='allowDrop(event)' draggable='true' ondragstart='drag(event)'>
+                        <td><pre>{{spaces(item.level)}}<button ng-click='treeClick(item.ID)'>{{item.status}}</button> {{item.display}}</pre></td>
+                    </tr>
+                </table>
             </div>
 
             <!--EDIT-->

@@ -2,39 +2,74 @@ var mmApp = angular.module("mmApp", ['ngSanitize']);
 mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     //$scope.x_o//
-    $scope.sloc="http://balej.w13.test-acc.com:8888/"; // node on Max Server
-    $scope.floc="file:///httpdocs/UploadedFiles/UploadedFiles/";
-    //$scope.sloc="http://172.22.22.51:8888/"; // node on Max Server
-    //$scope.floc="file:///home/kb/Documents/p/UploadedFiles/UploadedFiles/";
+    
+    //$scope.sloc="http://mcmax.azurewebsites.net/"; // node on Azure, no port
+    //$scope.floc="http://mcmax.azurewebsites.net/UploadedFiles/";  
+    
+    $scope.sloc="http://172.22.22.51:8888/"; // node on Max Server
+    $scope.floc="file:///home/kb/Documents/p/UploadedFiles/";
+    
     //$scope.sloc="http://localhost:8888/";  // node on Asus
     //$scope.floc="file:///Users/Admin/Onedrive/p_A/UploadedFiles/";
     // build load function
-    for (var x in $scope.x_o.lookups) {
-        if ($scope.x_o.lookups[x].masterLookup == undefined || $scope.x_o.lookups[x].masterLookup == null) { // masterLookup
-            $scope.x_o.lookups[x].load = function () {
-                $http.post($scope.sloc + 'KB_x_getAll?module=' + $scope.x_o.name + '&table=' + this.getParameters + '&rowsPage=999999&pageCt=1', JSON.stringify({ "params": [], "sql": "" })).then
-                    (function (response) {
-                        $scope.x_o.lookups[response.data.table].collection = response.data.rv;
-                    }, function
-                        (err) {
-                        $scope.x_o.lookups[err.data.table].collection = [{}];
-                    });
-            };
-        } else {
-            $scope.x_o.lookups[x].load = function () {
-                if (typeof this.masterID !== undefined && this.masterID !== null) {
-                    $http.post($scope.sloc + 'KB_x_getAll?module=' + $scope.x_o.name + '&table=' + this.getParameters + '&masterID=' + this.masterID + '&rowsPage=999999&pageCt=1', JSON.stringify({ "params": [], "sql": "" })).then
-                        (function (response) {
-                            $scope.x_o.lookups[response.data.table].collection = response.data.rv;
-                        }, function (err) {
-                            $scope.x_o.lookups[err.data.table].collection = [{}];
-                        });
-                } else {
-                    $scope.x_o.lookups[this.name].collection = [{}];
-                }
-            };
-        }
-    }
+    for (var x in $scope.x_o.lookups) { 
+        if ($scope.x_o.lookups[x].masterLookup == undefined || $scope.x_o.lookups[x].masterLookup == null) { // masterLookup 
+            $scope.x_o.lookups[x].load = function () { 
+                $http.post($scope.sloc + 'KB_x_getAll?module=' + $scope.x_o.name + '&table=' + this.getParameters + '&rowsPage=999999&pageCt=1', JSON.stringify({ "params": [], "sql": "" })).then 
+                    (function (response) { 
+                        $scope.x_o.lookups[response.data.table].collection = response.data.rv; 
+                        $scope.x_o.lookups[response.data.table].tree = convertListTree(response.data.rv); 
+                        $scope.x_o.lookups[response.data.table].tree1 = $scope.x_o.lookups[response.data.table].tree.filter(function (e) { return e.show }); 
+                        $scope.x_o.lookups[response.data.table].select = function (id) { 
+                            selectListTree(id, $scope.x_o.lookups[response.data.table].tree); 
+                            $scope.x_o.lookups[response.data.table].tree1 = null; 
+                            $scope.$apply(); 
+                            $scope.x_o.lookups[response.data.table].tree1 = $scope.x_o.lookups[response.data.table].tree.filter(function (e) { return e.show }); 
+                            $scope.$apply(); 
+                        }, function (err) { 
+                            $scope.x_o.lookups[err.data.table].collection = []; 
+                            $scope.x_o.lookups[err.data.table].tree = []; 
+                            $scope.x_o.lookups[err.data.table].tree1 = []; 
+                            $scope.x_o.lookups[err.data.table].select = function (id) { }; 
+                        }; 
+                }) 
+            }; 
+        } else { 
+            $scope.x_o.lookups[x].load = function () { 
+                if (this.masterID !== undefined && this.masterID !== null) { 
+                    $http.post($scope.sloc + 'KB_x_getAll?module=' + $scope.x_o.name + '&table=' + this.getParameters + '&masterID=' + this.masterID + '&rowsPage=999999&pageCt=1', JSON.stringify({ "params": [], "sql": "" })).then 
+                        (function (response) { 
+                            $scope.x_o.lookups[response.data.table].collection = response.data.rv; 
+                            $scope.x_o.lookups[response.data.table].tree = convertListTree(response.data.rv); 
+                            $scope.x_o.lookups[response.data.table].tree1 = $scope.x_o.lookups[response.data.table].tree.filter(function (e) { return e.show }); 
+                            $scope.x_o.lookups[response.data.table].select = function (id) { 
+                                selectListTree(id, $scope.x_o.lookups[response.data.table].tree); 
+                                $scope.x_o.lookups[response.data.table].tree1 = null; 
+                                $scope.$apply(); 
+                                $scope.x_o.lookups[response.data.table].tree1 = $scope.x_o.lookups[response.data.table].tree.filter(function (e) { return e.show }); 
+                                $scope.$apply(); 
+                            }, function (err) { 
+                                $scope.x_o.lookups[err.data.table].collection = []; 
+                                $scope.x_o.lookups[err.data.table].tree = []; 
+                                $scope.x_o.lookups[err.data.table].tree1 = []; 
+                                $scope.x_o.lookups[response.data.table].select = function (id) { 
+                                    selectListTree(id, $scope.x_o.lookups[response.data.table].tree); 
+                                    $scope.x_o.lookups[response.data.table].tree1 = null; 
+                                    $scope.$apply(); 
+                                    $scope.x_o.lookups[response.data.table].tree1 = $scope.x_o.lookups[response.data.table].tree.filter(function (e) { return e.show }); 
+                                    $scope.$apply(); 
+                                }; 
+                            }; 
+                        }); 
+                } else { 
+                    $scope.x_o.lookups[this.name].collection = []; 
+                    $scope.x_o.lookups[this.name].tree = []; 
+                    $scope.x_o.lookups[this.name].tree1 = []; 
+                    $scope.x_o.lookups[this.name].select = function (id) { };; 
+                } 
+            }; 
+        } 
+    } 
 
     $scope.x_n = [];
     $scope.x_rowsPage = 20;
@@ -43,6 +78,59 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     var ca = $scope.x_o.columns;
     var c = {};
+
+    $scope.spacesListTree = function (level) { 
+        var s = "", i; 
+        for (i = 0; i < level; i++) { s += "...."; } 
+        return s; 
+    }; 
+ 
+    convertListTree1 = function (level, id, list) { 
+        level += 1; 
+        var t = list.filter(function (e) { return e.parentID == id; }); 
+        for (var x in t) { 
+            var o = {}; 
+            o.ID = list[x].ID; 
+            if (level == 0) { 
+                o.show = true; 
+            } else { 
+                o.show = false; 
+            } 
+            o.level = level; 
+            o.name = list[x].name; 
+            o.parentID = list[x].parentID; 
+            o.sel = false; 
+            tree.push(o); 
+            convertListTree1(level, list[x].ID, list); 
+        } 
+    }; 
+
+    convertListTree = function (list) { 
+        var tree = []; 
+        for (var x in list) { 
+            if (list[x].parentID == undefined || list[x].parentID == "") { 
+                convertListTree1(-1, "", list); 
+            } 
+        } 
+        return tree; 
+    }; 
+
+   selectListTree = function (id, tree) { 
+        var first = true; 
+        for (var x in tree) { 
+            tree[x].sel = false; 
+            if (tree[x].level > 0) { 
+                tree[x].show = false; 
+                if (tree[x].parentID == id) { 
+                    tree[x].show = true; 
+                    if (first) { 
+                        first = false; 
+                        tree[x].sel = true; 
+                    } 
+                } 
+            } 
+        } 
+    }; 
 
     removeString = function (s) {
         var v = s;
@@ -245,7 +333,13 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                                         $scope.xEditFormDirty = true;
                                     }
                                 } else {
-                                    $scope.xElement.infoJSON[c.name] = c.default;
+                                    if (c.fieldType === "lookup" && c.source === "table") {
+                                        var t = $scope.x_o.lookups[c.lookups].collection.filter(e.infoJSON[$scope.xElement.infoJSON[c.name]] === c.default);
+                                        $scope.xElement.infoJSON[c.name.substring(0,c.name.length - 2) + "Name"] = c.default;
+                                        $scope.xElement.infoJSON[c.name] = t[0].ID;
+                                    } else {
+                                        $scope.xElement.infoJSON[c.name] = c.default;
+                                    }
                                     $scope.xEditFormDirty = true;
                                 }
                             }
@@ -571,31 +665,61 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     $scope.xInit = function () {
         $scope.xEditFormDirty = false;
-        $scope.x_page = "LIST";
+        if($scope.x_page !== "TREE") { $scope.x_page = "LIST"; } // after drag and drop keep TREE
         $scope.xInitComplete();
     };
+    $scope.buildTree = function (l, id) {
+        var llevel = l + 1;
+        var t = [];
+        if(id === "") {
+            t = $scope.xList.filter(function (e) { return e.parentID === undefined || e.parentID === id; });
+        } else {
+            t = $scope.xList.filter(function (e) { return e.parentID === id; });
+        }
+        for (var x in t) {
+            var n = {};
+            n.ID = t[x].ID;
+            n.sequence=t[x]._sequence;
+            n.display=t[x].infoJSON.name;
+            n.level = llevel;
+            var tt = $scope.xList.filter(function (e) { return e.parentID == t[x].ID; });
+            n.numberChildren = tt.length;
+            if(n.numberChildren > 0) {
+                n.status = "-";
+            } else {
+                n.status = " ";
+            }
+            n.show = true;
+            $scope.xTree[t[x].ID] = n;
+            if(n.numberChildren > 0) {$scope.buildTree(llevel, t[x].ID);}
+        }
+    };
     $scope.xInitComplete = function () {
-        $scope.xTree = {};
         $http.post($scope.sloc + 'KB_x_getAll?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&jsonFields=' + $scope.x_o.forms[$scope.x_form].fieldsJSON + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&masterID=' + $scope.x_masterID + '&rowsPage=' + $scope.x_rowsPage + '&pageCt=' + $scope.x_pageCt, JSON.stringify($scope.xSearchSql)).then
             (function (response) {
                 $scope.xList = response.data.rv;
-                $scope.xTree = function () {
-                    return {}; // ... build from $scope.xList
-                };
+                $scope.xTree = {};
+                for (var x in $scope.xList) {
+                    $scope.xList[x]._sequence = x;
+                }
+                $scope.buildTree(-1, "");
                 $scope.xTotal = {};
                 // calc totals for x_o.forms[x_forms].fieldsTotal
-                if($scope.x_o.forms[$scope.x_form].fieldsTotal !== undefined){
+                if($scope.x_o.forms[$scope.x_form].fieldsTotal !== undefined && $scope.x_o.forms[$scope.x_form].fieldsTotal !== ""){
                     var ttot = $scope.x_o.forms[$scope.x_form].fieldsTotal.split(",");
-                    for (var t in ttot) {
-                        var tot = 0;
-                        for (var v in $scope.xList) {
-                            if ($scope.xList[v].infoJSON[ttot[t]] !== undefined) { 
-                                tot += $scope.xList[v].infoJSON[ttot[t]] * 1; // numeric
+                    if(ttot !== undefined && ttot !== "" ){
+                        for (var t in ttot) {
+                            var tot = 0;
+                            for (var v in $scope.xList) {
+                                if ($scope.xList[v].infoJSON[ttot[t]] !== undefined) { 
+                                    tot += $scope.xList[v].infoJSON[ttot[t]] * 1; // numeric
+                                }
                             }
+                            $scope.xTotal[ttot[t]] = tot;
                         }
-                        $scope.xTotal[ttot[t]] = tot;
                     }
                 }      
+
                 if ($scope.xList.length > 0) {
                     if ($scope.x_rowsMax !== Math.round(response.data.rowCount / $scope.x_rowsPage + .5))
                         $scope.x_rowsMax = Math.round(response.data.rowCount / $scope.x_rowsPage + .5);
@@ -611,8 +735,8 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         $scope.x_page = "EDIT";
         $scope.xElement = { "ID": "", "infoJSON": {} };
         $scope.validateElement($scope.xElement.infoJSON, false);
+        $scope.initLookups(); // must precede setDefaultsElement for table lookup fields
         $scope.setDefaultsElement();
-        $scope.initLookups();
         var y = "" + $scope.x_o.forms[$scope.x_form].fieldsMap;
         if (y !== "") {
             initMap(y);
@@ -746,6 +870,31 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             }
         );
     };
+    
+    $scope.carousel = function () {
+        var xCarousel = {};
+        var vimg = $scope.x_o.forms[$scope.x_form].fieldsImage;
+        if(vimg !== undefined && vimg !== "") {
+            for (var x in $scope.xList) {
+                var o = {};
+                o.Picture = $scope.xList[x].infoJSON[vimg + "Path"];
+                o.Description = $scope.xList[x].infoJSON[vimg + "Capture"];
+                xCarousel[$scope.xList[x].ID] = o;
+            }
+        }
+        $http.post($scope.sloc + 'KB_carousel?module=' + $scope.x_o.name, JSON.stringify(xCarousel)).then
+            (function (response) {
+                var rv = response.data;
+                var w = window.open("carousel");
+                w.document.open("");
+                w.document.write(rv);
+                w.document.close();
+            }, function (err) {
+                alert("carousel error");
+            }
+        );
+    };
+
     $scope.doc = function (pfield) {
         if($scope.xElement.ID == "") {
             alert("save first !"); return;
@@ -836,7 +985,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         for (var v in d_id){ 
             s += " and JSON_VALUE(infoJSON,'$." + d_id[v] + "') = '" + $scope.xElement.infoJSON[d_id[v]] + "'";
         }
-        d_m.sql = d_m.sql + s + ";";        
+        d_m.sql = s + ";" + d_m.sql;        
         d_m.m.sort();
         d_m.i.sort();
         $http.post($scope.sloc + 'KB_doc?module=' + $scope.x_o.name, JSON.stringify(d_m)).then
@@ -853,7 +1002,71 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             }
         );
     };
+    
+    $scope.spaces = function (level) {   // used by tree table
+        var s = "", i;
+        for(i = 0; i < level; i++ ) { s +="    "; }
+        return s;
+    };
 
+    $scope.treeCollapse = function () {
+        for(var x in $scope.xTree) {
+            if($scope.xTree[x].numberChildren < 1) {
+                $scope.xTree[x].status = " ";
+            } else {
+                $scope.xTree[x].status = "+";
+            }
+            if($scope.xTree[x].level > 0){
+                $scope.xTree[x].show = false;
+            } else {
+                $scope.xTree[x].show = true;
+            }
+        }
+    };
+
+    $scope.treeExpand = function () {
+        for(var x in $scope.xTree) {
+            if($scope.xTree[x].numberChildren < 1) {
+                $scope.xTree[x].status = " ";
+            } else {
+                $scope.xTree[x].status = "-";
+            }
+            $scope.xTree[x].show = true;
+        }
+    };
+
+    $scope.collapseChildren = function(id) {
+        var t = $scope.xList.filter(function (e) { return e.parentID === id });
+        for (var x in t) {
+            $scope.xTree[t[x].ID].show = false;
+            if($scope.xTree[t[x].ID].numberChildren < 1){
+                $scope.xTree[t[x].ID].status=" ";
+            } else {
+                $scope.xTree[t[x].ID].status="+";
+            }
+            if($scope.xTree[t[x].ID].numberChildren > 0) { $scope.collapseChildren(t[x].ID);}
+        }
+    };
+
+    $scope.treeClick = function (id) {
+        if($scope.xTree[id].status === ' ') { return;}
+        if($scope.xTree[id].status === '+') { // open next level
+            var t = $scope.xList.filter(function (e) { return e.parentID === id });
+            for (var x in t) {
+                $scope.xTree[t[x].ID].show = true;
+                if($scope.xTree[t[x].ID].numberChildren < 1){
+                    $scope.xTree[t[x].ID].status = " ";
+                } else {
+                    $scope.xTree[t[x].ID].status = "-";
+                }
+            }
+            $scope.xTree[id].status = '-';
+        } else { // collapsed
+            $scope.collapseChildren(id);
+            $scope.xTree[id].status = '+';
+        }
+    };
+    
     allowDrop = function (ev) {
         ev.preventDefault();
     };
@@ -869,7 +1082,35 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         if (idFrom !== idTo) {
             var tFrom = $scope.xList.filter(function (e) { return e.ID === idFrom; });
             var tTo = $scope.xList.filter(function (e) { return e.ID === idTo; });
-            $scope.xUpDown(tFrom[0], tTo[0].sequence + 5);
+            if($scope.x_page === 'LISTTREE') {
+                $scope.xElement = $scope.xList[tFrom[0].sequence];
+                $scope.xElement.sequence = $scope.xList[tTo[0].sequence].sequence;
+                var dir = prompt("A-bove, B-elow, U-nderneath(for child)","A");
+                if(dir.toUpperCase=="B") {
+                    $scope.xElement.sequence += 5;
+                }
+                if(dir.toUpperCase=="A") {
+                    $scope.xElement.sequence -= 5;
+                }
+                if(dir.toUpperCase=="U") {
+                    $scope.xElement.parentID = $scope.xList[tTo[0].sequence].ID;
+                    $scope.xElement.sequence = 0; // top of sublevel
+                }
+                $http.post($scope.sloc  + 'KB_x_addUpdate?module=' + $scope.x_o.name + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.xElement.masterID + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy, JSON.stringify($scope.xElement.infoJSON)).then
+                    (function (response) {
+                        $scope.init();
+                    }, function (err) {
+                        alert("drop save error");
+                    });
+            } else { // LIST drag and drop
+                var dir = prompt("A-bove, B-elow","A");
+                if(dir.toUpperCase()=="B") {
+                    $scope.xUpDown(tFrom[0], tTo[0].sequence + 5);
+                }
+                if(dir.toUpperCase()=="A") {
+                    $scope.xUpDown(tFrom[0], tTo[0].sequence - 5);
+                }
+            }
         }
     };
 });
