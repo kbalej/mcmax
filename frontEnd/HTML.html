@@ -47,6 +47,10 @@
             grid-area: logo;
         }
 
+        .myMax {
+            grid-area: myMax;
+        }
+
         .path {
             grid-area: path;
         }
@@ -67,7 +71,7 @@
 
         .grid-container {
             display: grid;
-            grid-template-areas: 'logo mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu' 'logo current path path path path path down down down down down' 'pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs';
+            grid-template-areas: 'logo mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu myMax' 'logo current path path path path path down down down down down' 'pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs';
             grid-gap: 1px;
             padding: 1px;
         }
@@ -114,6 +118,19 @@
             <div class="grid-container">
                 <div class="logo">
                     <center><img src="http://www.verbierservices.net/images/McMax.jpg" width="90" border="0" /></center>
+                </div>
+                <div class="myMax">
+                    <center>
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">
+                            <span class="glyphicon glyphicon-menu-hamburger"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li ng-click="mymenu('mydata')"><a href="#">My Data</a></li>
+                            <li ng-click="mymenu('quit')"><a href="#">Quit</a></li>
+                        </ul>
+                    </div>    
+                    </center>
                 </div>
                 <div class="mainMenu">
                     <a class="navbar-brand" href="#">{{x_o.name}}</a>
@@ -206,8 +223,17 @@
 
             <!--EDIT-->
 
-            <form role="form" name="xEditForm" ng-show="x_page.substring(0, 4) == 'EDIT'" novalidate autocomplete="off">
+            <form role="form" name="xEditForm" ng-show="x_page.substring(0, 4) == 'EDIT'" novalidate autocomplete="new-password">
                 <div id="editItems" class="form-group" ng-switch="x_page + x_form">
+                    <div ng-switch-when='EDITmydata'>
+                        <hr>
+                        <label>your name</label>
+                        <input type='text' class='form-control' ng-model='xElement.infoJSON.name' > 
+                        <label>user name</label>
+                        <input type='text' class='form-control' ng-model='xElement.infoJSON.un' > 
+                        <label>password</label>
+                        <input type='text' class='form-control' ng-model='xElement.infoJSON.pwd' > 
+                    </div>
 
                     <!--htmlEdit-->
 

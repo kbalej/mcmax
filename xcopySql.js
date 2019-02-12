@@ -57,6 +57,7 @@ var o = function () {
             var request = new Request('ALTER TABLE VS_' + vtable + ' DROP CONSTRAINT DF_VS_' + vtable + '_ID;DROP TABLE VS_' + vtable, function (err, rowCount, rows) { });
             request.on('requestCompleted', function (err) {
                 console.log(vtable + ': delete table OK.');
+                // ,auto int IDENTITY(1,1) NULL
                 var request1 = new Request('SET ANSI_NULLS ON;SET QUOTED_IDENTIFIER ON;CREATE TABLE VS_' + vtable + '(ID nvarchar(50) NOT NULL,masterID nvarchar(50) NULL,parentID nvarchar(50) NULL,sequence int NULL,TS timestamp NULL,infoJSON nvarchar(max) NULL,CONSTRAINT PK_VS_' + vtable + ' PRIMARY KEY CLUSTERED (ID ASC) WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY];ALTER TABLE VS_' + vtable + ' ADD CONSTRAINT DF_VS_' + vtable + '_ID DEFAULT (newid()) FOR ID', function (err, rowCount, rows) { });
                 request1.on('requestCompleted', function (err) {
                     assert.equal(err, null);
@@ -75,7 +76,8 @@ var o = function () {
                     bulkLoad.addColumn('parentID', TYPES.NVarChar, { length: 50, nullable: true });
                     bulkLoad.addColumn('sequence', TYPES.Int, { nullable: true });
                     bulkLoad.addColumn('infoJSON', TYPES.NVarChar, { length: Infinity, nullable: true });
-                    dbo.collection(vtable).find().toArray(function (err, result) {
+                    //bulkLoad.addColumn('auto', TYPES.Int, { nullable: true });
+                   dbo.collection(vtable).find().toArray(function (err, result) {
                         assert.equal(err, null);
                         for (var index in result) {
                             if (result[index].masterID == undefined) { result[index].masterID = '' }
@@ -96,7 +98,7 @@ var o = function () {
 util.inherits(o, EventEmitter);
 var m = new o();
 
-var tables = ["brands", "cust", "custCOM", "custADL", "inv", "invDetails", "ldry", "ldryDetails"];
+var tables = ["cust", "custCOM", "custADL", "inv", "invDetails", "ldry", "ldryDetails"];
 var vtable = tables.pop();
 m.on('done', function (status) {
     console.log(vtable + ' ', status);

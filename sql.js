@@ -138,22 +138,36 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     });
                     connection.execSql(request9);
                     return;
+                 case "KB_table":
+                    var vtable = querystring.module + "_" + querystring.table;
+                    var vsql = "CREATE TABLE " + vtable + "( [ID] [uniqueidentifier] NOT NULL, [masterID] nvarchar NULL, [parentID] nvarchar NULL,";
+                    vsql += "[sequence] [int] NULL, [ts] [timestamp] NULL, uid nvarchar NULL, [name] AS (json_value([infoJSON],'$.name')), ";
+                    vsql += "[date] AS (json_value([infoJSON],'$._date')), [infoJSON] nvarchar NULL, "; // use ISO _date 
+                    vsql += "CONSTRAINT [PK_" + vtable + "] PRIMARY KEY CLUSTERED ( [ID] ASC )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY] ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY] GO ";
+                    vsql += "ALTER TABLE [dbo].[" + vtable + "] ADD CONSTRAINT [DF_" + vtable + "_ID] DEFAULT (newid()) FOR [ID] GO";
+                    vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_masterID] ON " + vtable + " ( [masterID] ASC )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY] GO ";
+                    vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_name] ON " + vtable + " ( [name] ASC )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY] GO ";
+                    vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_date] ON " + vtable + " ( [date] ASC )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY] GO ";
+                    var request10 = new Request(vsql, function() {});
+                    request10.on('requestCompleted', function() {
+                        var rv = "db table created " + new Date().toISOString();
+                        response.writeHead(200, { "Content-Type": "text/plain" });
+                        response.write(rv); 
+                        response.end();
+                        connection.close();
+                    });
+                    connection.execSql(request10);
+                    return;
                 case "KB_chart":
                     vrows = "";
                     var d = new Date();
                     var vlimit = d.getFullYear() - 2;
-                    var vsql = "SELECT CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) as int) as nYear, CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),6,2) as int) as nMonth, ";
-                    vsql += "SUM(CAST(JSON_VALUE(infoJSON, '$.cost_NET') as numeric)) as Tnet FROM VS_invDetails WHERE JSON_VALUE(infoJSON, '$.service') <> 'Divers' ";
-                    vsql += "AND CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) as int) > " + vlimit + " GROUP BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4), ";
-                    vsql += "SUBSTRING(JSON_VALUE(infoJSON, '$.date'),6,2) ORDER BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4), SUBSTRING(JSON_VALUE(infoJSON, '$.date'),6,2) for json path;";
-                    
-                    vsql += "SELECT CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) as int) as nYear, SUM(CAST(JSON_VALUE(infoJSON, '$.cost_NET') as numeric)) as Tnet ";
-                    vsql += "FROM VS_invDetails WHERE JSON_VALUE(infoJSON, '$.service') <> 'Divers' GROUP BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) ";
-                    vsql += "ORDER BY SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) for json path;"
-                    
-                    vsql += "SELECT JSON_VALUE(infoJSON, '$.service') as Service, SUM(CAST(JSON_VALUE(infoJSON, '$.cost_NET') as numeric)) as Tnet ";
-                    vsql += "FROM VS_invDetails GROUP BY JSON_VALUE(infoJSON, '$.service') ORDER BY JSON_VALUE(infoJSON, '$.service') for json path";
-                    
+                    var vsql = "CREATE TABLE #tmp (nYear int, nMonth int, nGroup NVARCHAR(10), Tnet DECIMAL); ";
+                    vsql += "INSERT INTO #tmp (nYear, nMonth, nGroup, Tnet) SELECT CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),1,4) as int) as vyear, CAST(SUBSTRING(JSON_VALUE(infoJSON, '$.date'),6,2) as int) as vmonth, JSON_VALUE(infoJSON, '$.service') as vgroup, CAST(JSON_VALUE(infoJSON, '$.cost_NET') as numeric) as Tnet FROM VS_invDetails;";  
+                    vsql += "SELECT nYear, nMonth, SUM(Tnet) Tnet FROM #tmp WHERE nGroup <> 'Divers' AND nYear > " + vlimit + " GROUP BY nYear, nMonth ORDER BY nYear, nMonth for json path;";
+                    vsql += "SELECT nYear, SUM(Tnet) Tnet FROM #tmp WHERE nGroup <> 'Divers' GROUP BY nYear ORDER BY nYear for json path;";
+                    vsql += "SELECT nGroup as Service, SUM(Tnet) Tnet FROM #tmp GROUP BY nGroup ORDER BY nGroup for json path;";
+                    vsql += "DROP TABLE #tmp;";
                     var request7 = new Request(vsql, function() {});
                     request7.on('row', function(rows) {
                         vrows += rows[0].value;
@@ -163,7 +177,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         t = t.replace("}][{", "}],[{");
                         t = "[" + t.replace("}][{", "}],[{") + "]";
                         var tt = JSON.parse(t);
-                        console.log(JSON.stringify(tt));
+                        //console.log(JSON.stringify(tt));
 
                         postData = postData.replace("//data//", JSON.stringify(tt[0]));
                         postData = postData.replace("//data1//", JSON.stringify(tt[1]));
@@ -304,6 +318,9 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     request.addParameter('tableP', TYPES.NVarChar, querystring.table, { length: 100 });
                     request.addParameter('ID', TYPES.NVarChar, querystring.ID, { length: 50 });
                     request.addParameter('masterID', TYPES.NVarChar, querystring.masterID, { length: 50 });
+                    request.addParameter('parentID', TYPES.NVarChar, querystring.parentID, { length: 500 });
+                    request.addParameter('uid', TYPES.NVarChar, querystring.uid, { length: 50 });
+                    request.addParameter('sequence', TYPES.NVarChar, querystring.sequence);
                     request.addParameter('objJSON', TYPES.NVarChar, postData, { length: 9000 });
                     break;
                 case "KB_n_delete":

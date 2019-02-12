@@ -1,3 +1,4 @@
+
     {
       "name"        : "worker",
       "script"      : "./index.js",
@@ -10,4 +11,4 @@
         "usePolling"   : true,
         "interval"    : 5
       }
-    }
+}

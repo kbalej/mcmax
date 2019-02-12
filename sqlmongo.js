@@ -1,6 +1,6 @@
 ﻿var MongoClient = require('mongodb').MongoClient;
 var buildModel = require("./buildModel");
-var uuid = require('uuid');
+var uuid = require('uuid/v1');
 var sss = require('./sss');
 
 function start(storedProcedure, response, postData, querystring, callback) {

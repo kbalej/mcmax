@@ -4,19 +4,6 @@ var uuid = require('uuid/v1');
 var buildFE = require("./buildFE");
 
 
-function login(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'login' was called.");
-    var v = JSON.parse(postData)
-    if(v.usrname == 'k' && v.password == 'k') {
-        response.writeHead(200, { "Content-Type": "text/plain" });
-        response.write("OK");
-        response.end();
-    } else {
-        response.writeHead(300, { "Content-Type": "text/plain" });
-        response.write("NOK");
-        response.end();
-    }
-}
 function KB_x_getAll(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'KB_x_getAll' was called.");
     dbh.start("KB_x_getAll", response, postData, querystring);
@@ -36,6 +23,10 @@ function KB_x_sequencePut(response, postData, pathname, querystring, request, db
 function KB_getAuto(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'KB_getAuto' was called.");
     dbh.start("KB_getAuto", response, postData, querystring);
+}
+function KB_table(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_table' was called.");
+    dbh.start("KB_table", response, postData, querystring);
 }
 function KB_doc(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'KB_doc' was called.");
@@ -170,7 +161,6 @@ function KB_showFile(response, postData, pathname, querystring, request, dbh) {
 }
 exports.upload = upload;
 exports.load = load;
-exports.login = login;
 exports.KB_x_getAll = KB_x_getAll;
 exports.KB_x_addUpdate = KB_x_addUpdate;
 exports.KB_x_delete = KB_x_delete;
@@ -179,4 +169,5 @@ exports.KB_getAuto = KB_getAuto;
 exports.KB_doc = KB_doc;
 exports.KB_chart = KB_chart;
 exports.KB_carousel = KB_carousel;
+exports.KB_table = KB_table;
 exports.KB_showFile = KB_showFile;

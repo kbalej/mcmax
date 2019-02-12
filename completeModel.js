@@ -177,7 +177,7 @@ function start(x_o) {
                         vt += "<td></td>";
                     }
                 }
-                vd += "<td><a href=\"#\" ng-click=\"xView(item)\"><span class=\"glyphicon glyphicon-eye-open\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,Number(item.sequence) - 15)\"><span class=\"glyphicon glyphicon-arrow-up\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,Number(item.sequence) + 15)\"><span class=\"glyphicon glyphicon-arrow-down\"></span></a></td>";
+                vd += "<td><a href=\"#\" ng-click=\"xView(item)\"><span class=\"glyphicon glyphicon-eye-open\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,item.sequence - 15)\"><span class=\"glyphicon glyphicon-arrow-up\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,item.sequence + 15)\"><span class=\"glyphicon glyphicon-arrow-down\"></span></a></td>";
                 vhtmlList += "<div ng-switch-when='" + x_o.forms[f].pages[p].name + x_o.forms[f].name + "'>";
                 vhtmlList += "<table class='table table-striped' ng-switch='x_form'><thead><tr>" + vh + "</tr></thead><tbody>";
                 if (x_o.forms[f].orderBy === "sequence") {
@@ -278,23 +278,26 @@ function start(x_o) {
                                     break;
                                 case "lookup":
                                     if (c.source === "table") {
-                                        vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "'";
+                                        vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
                                         if (c.lookupFields == undefined) { c.lookupFields = '' }
-                                        vhtmlEdit += " ng-change=\"treeClick(xElement.infoJSON." + c.name + ");completeLookupField('xElement',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "');\" >";
-                                        vhtmlEdit += "<OPTION ng-repeat='item in x_o.lookups[" + c.lookup + "].tree1' value='{{item.ID}}' ng-selected='item.sel' /> ";
-                                        vhtmlEdit += "{{spacesListTree(item.level)}} {{item.name}}";
+                                        vhtmlEdit += "ng-change=\"select(xElement.infoJSON." + c.name + ",'" + c.lookup + "');completeLookupField('xElement',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "');\" >";
+                                        vhtmlEdit += "<OPTION ng-repeat='item in x_o.lookups." + c.lookup + ".tree1' value='{{item.ID}}' ng-selected='item.sel' > ";
+                                        vhtmlEdit += "{{spacesListTree(item.level)}} {{item.name}} </OPTION> ";
                                     }
                                     if (c.source === "model") {
                                         vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
                                         vhtmlEdit += " ng-options='" + c.modelPath + "' >";
                                     }
+                                    if (c.source === "specific") {
+                                        vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    }
                                     if (c.specific !== undefined) {
                                         result = c.specific.match(/\w+/g);
                                         for (x in result) {
                                             if (result[x] === "_") {
-                                                vhtmlEdit += "<option value = ''> -- none --";
+                                                vhtmlEdit += "<option value = '' > -- none --</option>";
                                             } else {
-                                                vhtmlEdit += "<option value = '" + result[x] + "'>" + result[x];
+                                                vhtmlEdit += "<option value = '" + result[x] + "' >" + result[x] + "</option>";
                                             }
                                         }
                                     }
@@ -302,7 +305,7 @@ function start(x_o) {
                                     break;
                             }
                         }
-                        if (c.fieldType === "date" || c.fieldType === "datetime" || c.fieldType === "local" || c.fieldType === "month" || c.fieldType === "time" || c.fieldType === "week") {
+                        if (c.fieldType === "date" || c.fieldType === "local") { //  || c.fieldType === "datetime" || c.fieldType === "month" || c.fieldType === "time" || c.fieldType === "week"
                             if (!vFieldsDate.includes(c.name)) { vFieldsDate += c.name + ","; }
                         }
                         if (c.fieldType === "checkBox") {

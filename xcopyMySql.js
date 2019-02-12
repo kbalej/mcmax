@@ -47,8 +47,9 @@ var o = function () {
                     console.log(vtable + ': delete table OK.');
                     con.query('CREATE TABLE IF NOT EXISTS ' + vtable + ' ' +
                         '(ID VARCHAR(50) NOT NULL, ' +
-                        ' masterID VARCHAR(50) NULL DEFAULT "", ' +
-                        ' parentID VARCHAR(50) NULL DEFAULT "", ' +
+                        ' auto INT NOT NULL AUTO_INCREMENT, ' +
+                        ' masterID VARCHAR(50) NOT NULL DEFAULT "", ' +
+                        ' parentID VARCHAR(50) NOT NULL DEFAULT "", ' +
                         ' sequence SMALLINT NOT NULL DEFAULT 0, ' +
                         ' TS TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
                         ' infoJSON VARCHAR(16000) NOT NULL, ' +
