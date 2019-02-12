@@ -950,6 +950,19 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         $scope.xInitComplete();
     };
     
+    $scope.dbtc = function (pfield,db,table) {
+        if(db === undefined || table == undefined) { return; }
+        if(windows.confirm("create db table")) {
+            $http.post($scope.sloc + 'KB_table?module=' + db + "&table=" + table, "dummy").then  // module for db
+                (function (response) {
+                    $scope.xElement.infoJSON[pfield] = response.data;
+                }, function (err) {
+                    alert("db table not created");
+                }
+            );
+        }
+    };
+        
     $scope.chart = function () {
         $scope.x_o.forms[$scope.x_form].pages[$scope.x_page].graph = false;
         $http.post($scope.sloc + 'KB_chart?module=' + $scope.x_o.name, "dummy").then

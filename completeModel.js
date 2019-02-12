@@ -276,6 +276,9 @@ function start(x_o) {
                                 case "doc":
                                     vhtmlEdit += "<a href='{{sloc}}{{xElement.infoJSON." + c.name + "}}.html' target='_blank'> {{xElement.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='doc(\"" + c.name + "\")' value='create doc and save' >";
                                     break;
+                                case "dbtc":
+                                    vhtmlEdit += "{{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='dbtc(\"" + c.name + "\",xElement.infoJSON.db,xElement.infoJSON.name)' value='create db table' >";
+                                    break;
                                 case "lookup":
                                     if (c.source === "table") {
                                         vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
