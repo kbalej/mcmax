@@ -79,7 +79,13 @@ color: white;
     white-space: pre-wrap;
 }
 .header {
-    font-size: 24px;
+    font-size: 22px;
+}
+.line {
+    font-size: 16px;
+}
+.total {
+    font-size: 18px;
 }
 /*#id1 {}*/
 </style>
@@ -99,7 +105,7 @@ color: white;
 <br />
 <br />
 <br />
-FACTURE: {{dm.m.iNumber}}<br />
+<span class="header">FACTURE: {{dm.m.iNumber}}</span><br /><br />
 date: <span ng-bind="dm.m.date | date:'dd.MM.yyyy'"></span><br />
 délai: <span>{{dm.m.date | kDateAddFromDateISO8601 : 10 | date:'dd.MM.yyyy'}}</span> 
 </div>
@@ -120,17 +126,17 @@ délai: <span>{{dm.m.date | kDateAddFromDateISO8601 : 10 | date:'dd.MM.yyyy'}}</
 <table>
 <thead>
 <tr>
-<th></th><th></th><th></th><th>qté/heures</th><th>prix unitaire</th><th>CHF</th>
+<th></th><th></th><th></th><th>qté / heures</th><th>prix unitaire</th><th>CHF</th>
 </tr>
 </thead>
 <tbody>
 <tr ng-repeat='body in dm.i'>
-<td><span ng-bind="dm.m.date | date:'dd.MM.yyyy'"></span><br /></td><td>{{body.service}}</td><td><span class='pre'>{{body.description}}</span></td><td>{{body.hoursWorked}}</td><td>{{body.hourlyRate}}</td><td ng-bind='body.cost | number : 2'></td>
+<td class='line'><span ng-bind="body.date | date:'dd.MM.yyyy'"></span><br /></td><td class='line'>{{body.service}}</td><td><span class='pre'>{{body.description}}</span></td><td class='line'>{{body.hoursWorked}}</td><td class='line'>{{body.hourlyRate}}</td><td ng-bind='body.cost | number : 2' class='line'></td>
 </tr>
 </tbody>
 <tfoot>
 <tr>
-<td></td><td></td><td></td><td></td><td class='header'>TOTAL</td><td class='header' ng-bind='dm.if.cost | number : 2'></td>
+<td></td><td></td><td></td><td></td><td class='line'>TOTAL</td><td class='total' ng-bind='dm.if.cost | number : 2'></td>
 </tr>
 </tfoot>
 </table>
