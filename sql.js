@@ -268,7 +268,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     for (v in x) {
                         if (vob !== "") { vob += " , "; }
                         var xx = x[v].split(":")
-                        if (xx[0] === "sequence") {
+                        if (xx[0] === "sequence" || xx[0] === "date") {
                             vob += " " + xx[0];
                         } else {
                             vob += " JSON_VALUE(infoJSON, '$." + xx[0] + "')";
