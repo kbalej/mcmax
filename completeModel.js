@@ -16,7 +16,7 @@ function start(x_o) {
         return v;
     };
 
-    var vFieldsLookup2 = "";    // lookup names,
+    var vFieldsLookup2 = ""; // lookup names,
 
     var vhtmlSearch = "";
     var vhtmlList = "";
@@ -34,33 +34,65 @@ function start(x_o) {
         var vFieldsLookup = ""; // field names,
         if (x_o.forms[f].parent !== undefined) {
             x_o.forms[x_o.forms[f].parent].subForms.push(x_o.forms[f].name);
-        }  // update subForms of parent
+        } // update subForms of parent
         if (x_o.forms[f].tablesID !== undefined) {
             for (x in x_o.tables[x_o.forms[f].tablesID].columns) {
                 c = x_o.columns[x_o.tables[x_o.forms[f].tablesID].columns[x]];
-                if (!vFieldsJSON.includes(c.name)) { vFieldsJSON += c.name + ","; }
+                if (!vFieldsJSON.includes(c.name)) {
+                    vFieldsJSON += c.name + ",";
+                }
                 if (c.fieldType === "lookup" && c.source === "table") {
-                    if (!vFieldsJSON.includes(c.lookup + "Name,")) { vFieldsJSON += c.lookup + "Name,"; }
+                    if (!vFieldsJSON.includes(c.lookup + "Name,")) {
+                        vFieldsJSON += c.lookup + "Name,";
+                    }
                     if (c.masterLookup !== undefined) {
-                        if (!vFieldsJSON.includes(c.lookup + "masterID,")) { vFieldsJSON += c.lookup + "masterID,"; }
-                        if (!vFieldsJSON.includes(c.lookup + "masterName,")) { vFieldsJSON += c.lookup + "masterName,"; }
+                        if (!vFieldsJSON.includes(c.lookup + "masterID,")) {
+                            vFieldsJSON += c.lookup + "masterID,";
+                        }
+                        if (!vFieldsJSON.includes(c.lookup + "masterName,")) {
+                            vFieldsJSON += c.lookup + "masterName,";
+                        }
                     }
                 }
                 if (c.fieldType === "image") {
-                    if (!vFieldsJSON.includes(c.name + "Path,")) { vFieldsJSON += c.name + "Path,"; }
-                    if (!vFieldsJSON.includes(c.name + "Capture,")) { vFieldsJSON += c.name + "Capture,"; }
-                    if (!vFieldsJSON.includes(c.name + "Comment,")) { vFieldsJSON += c.name + "Comment,"; }
-                    if (!vFieldsJSON.includes(c.name + "Width,")) { vFieldsJSON += c.name + "Width,"; }
-                    if (!vFieldsJSON.includes(c.name + "Height,")) { vFieldsJSON += c.name + "Height,"; }
+                    if (!vFieldsJSON.includes(c.name + "Path,")) {
+                        vFieldsJSON += c.name + "Path,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Capture,")) {
+                        vFieldsJSON += c.name + "Capture,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Comment,")) {
+                        vFieldsJSON += c.name + "Comment,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Width,")) {
+                        vFieldsJSON += c.name + "Width,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Height,")) {
+                        vFieldsJSON += c.name + "Height,";
+                    }
                 }
                 if (c.fieldType === "map") {
-                    if (!vFieldsJSON.includes(c.name + "Capture,")) { vFieldsJSON += c.name + "Capture,"; }
-                    if (!vFieldsJSON.includes(c.name + "Comment,")) { vFieldsJSON += c.name + "Comment,"; }
-                    if (!vFieldsJSON.includes(c.name + "Width,")) { vFieldsJSON += c.name + "Width,"; }
-                    if (!vFieldsJSON.includes(c.name + "Height,")) { vFieldsJSON += c.name + "Height,"; }
-                    if (!vFieldsJSON.includes(c.name + "Longitude,")) { vFieldsJSON += c.name + "Longitude,"; }
-                    if (!vFieldsJSON.includes(c.name + "Latitude,")) { vFieldsJSON += c.name + "Latitude,"; }
-                    if (!vFieldsJSON.includes(c.name + "Zoom,")) { vFieldsJSON += c.name + "Zoom,"; }
+                    if (!vFieldsJSON.includes(c.name + "Capture,")) {
+                        vFieldsJSON += c.name + "Capture,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Comment,")) {
+                        vFieldsJSON += c.name + "Comment,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Width,")) {
+                        vFieldsJSON += c.name + "Width,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Height,")) {
+                        vFieldsJSON += c.name + "Height,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Longitude,")) {
+                        vFieldsJSON += c.name + "Longitude,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Latitude,")) {
+                        vFieldsJSON += c.name + "Latitude,";
+                    }
+                    if (!vFieldsJSON.includes(c.name + "Zoom,")) {
+                        vFieldsJSON += c.name + "Zoom,";
+                    }
                 }
             }
             x_o.forms[f].fieldsJSON = removeTrailingComma(vFieldsJSON);
@@ -74,7 +106,9 @@ function start(x_o) {
                     if (c !== undefined) { // skip pages without fields
                         if (c.label !== undefined) { // show fields with label, only
                             var vfieldname = c.name; // for id and model
-                            if (x_o.forms[f].pages[p].fields[fi].labelComplement !== undefined) { vfieldname += x_o.forms[f].pages[p].fields[fi].labelComplement }
+                            if (x_o.forms[f].pages[p].fields[fi].labelComplement !== undefined) {
+                                vfieldname += x_o.forms[f].pages[p].fields[fi].labelComplement
+                            }
                             vhtmlSearch += "<label for='" + x_o.forms[f].name + c.name + "'>" + c.label + " " + x_o.forms[f].pages[p].fields[fi].comparisonType + "</label >";
                             switch (c.fieldType) {
                                 case "text":
@@ -104,7 +138,11 @@ function start(x_o) {
                                     }
                                     if (c.source === "table") {
                                         // field must be included in EDIT pages to define x_o.lookups
-                                        if (c.lookupFields === undefined) { c.lookupFields = '' } else { console.log(c.lookupFields); }
+                                        if (c.lookupFields === undefined) {
+                                            c.lookupFields = ''
+                                        } else {
+                                            console.log(c.lookupFields);
+                                        }
                                         vhtmlSearch += " ng-change=\"completeLookupField('xSearch',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "')\" ng-options='it.ID as it.name for it in x_o.lookups." + c.lookup + ".collection'";
                                     }
                                     if (c.source === "model") {
@@ -160,7 +198,7 @@ function start(x_o) {
                         } else {
                             if (c.fieldType === 'number') {
                                 if (c.fractionSize === undefined) {
-                                    vd += "<td align='right' ng-bind='item.infoJSON." + c.name + " | number : 2'></td>"; 
+                                    vd += "<td align='right' ng-bind='item.infoJSON." + c.name + " | number : 2'></td>";
                                 } else {
                                     vd += "<td align='right' ng-bind='item.infoJSON." + c.name + " | number : " + c.fractionSize + "'></td>";
                                 }
@@ -177,11 +215,11 @@ function start(x_o) {
                         vt += "<td></td>";
                     }
                 }
-                vd += "<td><a href=\"#\" ng-click=\"xView(item)\"><span class=\"glyphicon glyphicon-eye-open\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,item.sequence - 15)\"><span class=\"glyphicon glyphicon-arrow-up\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,item.sequence + 15)\"><span class=\"glyphicon glyphicon-arrow-down\"></span></a></td>";
+                vd += "<td><a href=\"#\" ng-click=\"xView(item)\"><span class=\"glyphicon glyphicon-eye-open\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,-15)\"><span class=\"glyphicon glyphicon-arrow-up\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,15)\"><span class=\"glyphicon glyphicon-arrow-down\"></span></a></td>";
                 vhtmlList += "<div ng-switch-when='" + x_o.forms[f].pages[p].name + x_o.forms[f].name + "'>";
                 vhtmlList += "<table class='table table-striped' ng-switch='x_form'><thead><tr>" + vh + "</tr></thead><tbody>";
                 if (x_o.forms[f].orderBy === "sequence") {
-                    vhtmlList += "<tr id='{{item.ID}}' ondrop='drop(event)' ondragover='allowDrop(event)' draggable='true' ondragstart='drag(event)' ng-repeat='item in xList  | orderBy:myOrderBy'>" + vd;
+                    vhtmlList += "<tr id='{{item.ID}}' ondrop='drop(event)' ondragover='allowDrop(event)' draggable='true' ondragstart='drag(event)' ng-repeat='item in xList | orderBy:myOrderBy'>" + vd;
                 } else {
                     vhtmlList += "<tr ng-repeat='item in xList  | orderBy:myOrderBy'>" + vd;
                 }
@@ -197,11 +235,11 @@ function start(x_o) {
                     c = ca[x_o.forms[f].pages[p].fields[fi].columnsID];
                     if (c !== undefined) { // skip pages without fields
                         if (c.label !== undefined) { // show fields with label, only
-                            var vhide = "";   // label + input
+                            var vhide = ""; // label + input
                             if (c.hideIf !== undefined) {
                                 vhide = " ng-hide=\"" + c.hideIf.replace(/_./gi, "xElement.infoJSON.").replace(/::/gi, "'") + "\" "; // replace _ by xElement.infoJSON and :: by '
                             }
-                            switch (c.fieldType) {  // label
+                            switch (c.fieldType) { // label
                                 case "tel":
                                     vhtmlEdit += "<label for='" + x_o.forms[f].name + c.name + "'" + vhide + "><a href='tel:{{xElement.infoJSON." + c.name + "}}' target='_blank'><span ng-if='xElement.infoJSON." + c.name + "' class='glyphicon glyphicon-earphone'></span></a></label >";
                                     break;
@@ -219,7 +257,7 @@ function start(x_o) {
                                     vhtmlEdit += "<label for='" + x_o.forms[f].name + c.name + "'" + vhide + ">" + c.label + "</label >";
                                     break;
                             }
-                            switch (c.fieldType) {  // input 
+                            switch (c.fieldType) { // input 
                                 case "text":
                                 case "password":
                                 case "email":
@@ -237,12 +275,16 @@ function start(x_o) {
                                 case "datetime":
                                     vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='datetime-local' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
                                     break;
-                                case "number":  // input type number does not display value, replaced by text
-                                    if(c.autoNumber || c.calcNumber) {   // readonly
+                                case "number": // input type number does not display value, replaced by text
+                                    if (c.autoNumber || c.calcNumber) { // readonly
                                         vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' readonly >";
-                                        if (c.autoNumber && !vFieldsAuto.includes(c.name)) { vFieldsAuto += c.name + ","; }
-                                        if (c.totalNumber && !vFieldsTotal.includes(c.name)) { vFieldsTotal += c.name + ","; }
-                                    }else {
+                                        if (c.autoNumber && !vFieldsAuto.includes(c.name)) {
+                                            vFieldsAuto += c.name + ",";
+                                        }
+                                        if (c.totalNumber && !vFieldsTotal.includes(c.name)) {
+                                            vFieldsTotal += c.name + ",";
+                                        }
+                                    } else {
                                         vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
                                     }
                                     break;
@@ -277,12 +319,14 @@ function start(x_o) {
                                     vhtmlEdit += "<a href='{{sloc}}{{xElement.infoJSON." + c.name + "}}.html' target='_blank'> {{xElement.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='doc(\"" + c.name + "\")' value='create doc and save' >";
                                     break;
                                 case "dbtc":
-                                    vhtmlEdit += "{{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='dbtc(\"" + c.name + "\",xElement.infoJSON.db,xElement.infoJSON.name)' value='create db table' >";
+                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='dbtc(\"" + c.name + "\",xElement.infoJSON.db,xElement.infoJSON.name)' value='create db table' >";
                                     break;
                                 case "lookup":
                                     if (c.source === "table") {
                                         vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
-                                        if (c.lookupFields == undefined) { c.lookupFields = '' }
+                                        if (c.lookupFields == undefined) {
+                                            c.lookupFields = ''
+                                        }
                                         vhtmlEdit += "ng-change=\"select(xElement.infoJSON." + c.name + ",'" + c.lookup + "');completeLookupField('xElement',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "');\" >";
                                         vhtmlEdit += "<OPTION ng-repeat='item in x_o.lookups." + c.lookup + ".tree1' value='{{item.ID}}' ng-selected='item.sel' > ";
                                         vhtmlEdit += "{{spacesListTree(item.level)}} {{item.name}} </OPTION> ";
@@ -290,6 +334,9 @@ function start(x_o) {
                                     if (c.source === "model") {
                                         vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
                                         vhtmlEdit += " ng-options='" + c.modelPath + "' >";
+                                        if (c.other) {
+                                            vhtmlEdit += "<input type='text' class='form-control' placeholder='Enter free text option' ng-model='xElement.infoJSON." + c.name + "'>";
+                                        }
                                     }
                                     if (c.source === "specific") {
                                         vhtmlEdit += "<select id='" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
@@ -309,19 +356,29 @@ function start(x_o) {
                             }
                         }
                         if (c.fieldType === "date" || c.fieldType === "local") { //  || c.fieldType === "datetime" || c.fieldType === "month" || c.fieldType === "time" || c.fieldType === "week"
-                            if (!vFieldsDate.includes(c.name)) { vFieldsDate += c.name + ","; }
+                            if (!vFieldsDate.includes(c.name)) {
+                                vFieldsDate += c.name + ",";
+                            }
                         }
                         if (c.fieldType === "checkBox") {
-                            if (!vFieldsCheckbox.includes(c.name)) { vFieldsCheckbox += c.name + ","; }
+                            if (!vFieldsCheckbox.includes(c.name)) {
+                                vFieldsCheckbox += c.name + ",";
+                            }
                         }
                         if (c.fieldType === "map") {
-                            if (!vFieldsMap.includes(c.name)) { vFieldsMap += c.name + ","; }
+                            if (!vFieldsMap.includes(c.name)) {
+                                vFieldsMap += c.name + ",";
+                            }
                         }
                         if (c.fieldType === "image") {
-                            if (!vFieldsImage.includes(c.name)) { vFieldsImage += c.name + ","; }
+                            if (!vFieldsImage.includes(c.name)) {
+                                vFieldsImage += c.name + ",";
+                            }
                         }
                         if (c.fieldType === "lookup" && c.source === "table") {
-                            if (!vFieldsLookup.includes(c.name)) { vFieldsLookup += c.name + ","; }
+                            if (!vFieldsLookup.includes(c.name)) {
+                                vFieldsLookup += c.name + ",";
+                            }
                             if (!vFieldsLookup2.includes(c.lookup)) {
                                 // set up lookups
                                 vFieldsLookup2 += c.lookup + ",";
