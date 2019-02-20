@@ -51,11 +51,11 @@ function KB_doc(response, postData, pathname, querystring, request, dbh) {
                 vgrandchildren += "<td>{{body." + value + "}}</td>";
             }
             for (v in d_m.g){
-                vgrandchildren += "<hr><hr><hr><div ng-show='d_m.g." + v + ".length()>0'>Annex: " + v + "<table><thead><tr><th>date</th>";  // date as link
+                vgrandchildren += "<hr><hr><hr><div>Annex: " + v + "<table><thead><tr><th>date</th>";  // date as link
                 d_m.g[v].forEach(getArrayElementsHeader);
-                vgrandchildren += "</tr></thead><tbody><tr ng-repeat='body in dm.g[v]'><td>{{body.date}}</td>";  // date as link
+                vgrandchildren += "</tr></thead><tbody><tr ng-repeat='body in dm.g." + v + "'><td><span ng-bind=\"body.date1 | date:'dd.MM.yyyy'\"></span></td>";  // date as link
                 d_m.g[v].forEach(getArrayElementsBody);
-                vgrandchildren += "</tr></table></div>";
+                vgrandchildren += "</tr></tbody></table></div>";
             }
             for (v in d_m.i){
                 vheader += "<th>" + d_m.i[v] + "</th>";
