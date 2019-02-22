@@ -425,7 +425,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                                     t_val[c.name].html = []; // pointer to model fields for each xElement field
                                     t_val[c.name].html.push(p + " " + fi);
                                     if (c.required !== undefined) {
-                                        t_val[c.name].required = c.required.replace(/_./gi, "$scope.xElement.infoJSON.").replace(/::/gi, "'");
+                                        t_val[c.name].required = c.required.replace(/_/gi, "$scope.xElement.infoJSON.").replace(/::/gi, "'");
                                     }
                                     if (c.pattern !== undefined) {
                                         t_val[c.name].regex = c.pattern;
@@ -547,12 +547,19 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         $scope.xSearchSql = {};
         $scope.xSearchSql.params = searchParameters; // array of objects: field, compare, value
         $scope.xSearchSql.sql = "JSON_VALUE(infoJSON,'$.un') = '" + $scope.login.usrname + "' and JSON_VALUE(infoJSON,'$.pwd') = '" + $scope.login.password + "'";
-        $http.post($scope.sloc + "KB_x_getAll?module=KB&table=users&jsonFields=&orderBy=name&masterID=&rowsPage=1&pageCt=1", JSON.stringify($scope.xSearchSql)).then(function (response) {
+        $http.post($scope.sloc + "KB_x_getAll?module=KB&table=users&jsonFields=&orderBy=name&masterID=%&rowsPage=1&pageCt=1", JSON.stringify($scope.xSearchSql)).then
+            (function (response) {
                 if (response.data.rv.length > 0) {
                     userid = response.data.rv[0].ID;
                     $scope.myData = response.data.rv[0];
-                    $scope.error = "";
-                    $scope.x_page = " "; // show main menu only
+                    if($scope.myData.db === $scope.x_o.name || $scope.myData.level === "admin" && $scope.x_o.name === "KB" || $scope.login.usrname === "k"){
+                        if(setAccessRights()) {
+                            $scope.error = "";
+                            $scope.x_page = " "; // show main menu only
+                        }
+                    } else {
+                        $scope.error = ">> no access rights <<";  
+                    }                       
                 } else {
                     $scope.error = ">> user name / password unknown <<";
                 }
@@ -560,6 +567,42 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             function (err) {
                 $scope.error = ">> e r r o r <<";
             });
+    };
+
+    setAccessRights = function() {
+        if($scope.myData.level === "user"){
+            $http.post($scope.sloc + "KB_x_getAll?module=KB&table=accessRights&jsonFields=&orderBy=sequence&masterID=userid&rowsPage=900&pageCt=1", JSON.stringify($scope.xSearchSql)).then
+            (function (response) {
+                $scope.xList = response.data.rv;
+                for(var x in $scope.xList){
+                    $scope.x_o.forms[$scope.xList[x].name]._C = xList[x].create;
+                    $scope.x_o.forms[$scope.xList[x].name]._R = xList[x].read;
+                    $scope.x_o.forms[$scope.xList[x].name]._U = xList[x].update;
+                    $scope.x_o.forms[$scope.xList[x].name]._D = xList[x].delete;
+                    setReadRights($scope.x_o.forms[$scope.xList[x].name].parent);
+                }
+            },
+            function (err) {
+                alert("error setAccessRights " + JSON.stringify(err));
+                $scope.xList = [];
+                return false;
+            });
+        } else {
+            for(var x in $scope.x_o.forms) {
+                $scope.x_o.forms[x]._C = true;
+                $scope.x_o.forms[x]._R = true;
+                $scope.x_o.forms[x]._U = true;
+                $scope.x_o.forms[x]._D = true;
+            } 
+        }
+        return true;
+    };
+
+    setReadRights = function(f) {
+        if(f !== undefined && f !== ""){
+            $scope.x_o.forms[f]._R = true;
+            setReadRights($scope.x_o.forms[f].parent);
+        }
     };
 
     // *** navbar
@@ -588,7 +631,11 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             temp = $scope.x_n.pop();
         }
         retrievePrevious(temp, "", "");
-        $scope.x_page = "LIST"; // navUp to LIST, not EDIT
+        if ($scope.x_o.forms[$scope.x_form].pages["TREE"] == undefined) {
+            $scope.x_page = "LIST";
+        } else {
+            $scope.x_page = "TREE";
+        }
         $scope.xEditFormDirty = false;
         xInitComplete();
     };
@@ -830,7 +877,20 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     xInitComplete = function () {
-        $http.post($scope.sloc + 'KB_x_getAll?module=' + $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&jsonFields=' + $scope.x_o.forms[$scope.x_form].fieldsJSON + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&masterID=' + $scope.x_masterID + '&rowsPage=' + $scope.x_rowsPage + '&pageCt=' + $scope.x_pageCt, JSON.stringify($scope.xSearchSql)).then(function (response) {
+        var h = $scope.x_masterID;
+        if($scope.x_o.forms[$scope.x_form].masterEmpty){h = "";}
+        if($scope.x_o.forms[$scope.x_form].ignoreMaster){h = "%";}
+        if($scope.x_o.forms[$scope.x_form].userOnly){
+            var ho = {};
+            ho.field = "uid";
+            ho.compare = "=";
+            ho.value = userid;
+            $scope.xSearchSql.params.push(ho);
+            if($scope.xSearchSql.sql !== "") {$scope.xSearchSql.sql += " AND "}
+            $scope.xSearchSql.sql += "uid = '" + userid + "'";
+            $scope.xSearchListTitle += " filtered for user";
+        }
+        $http.post($scope.sloc + 'KB_x_getAll?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&jsonFields=' + $scope.x_o.forms[$scope.x_form].fieldsJSON + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&masterID=' + h + '&rowsPage=' + $scope.x_rowsPage + '&pageCt=' + $scope.x_pageCt, JSON.stringify($scope.xSearchSql)).then(function (response) {
             $scope.xList = response.data.rv;
             $scope.xTree = [];
             for (var x in $scope.xList) {
@@ -860,7 +920,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             }
         }, function (err) {
             alert("error xInit " + JSON.stringify(err));
-            $scope.xList = [{}];
+            $scope.xList = [];
         });
     };
 
@@ -883,7 +943,11 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     $scope.xView = function (item) {
-        $scope.x_page = "EDIT";
+        if($scope.x_o.forms[$scope.x_form]._U){
+            $scope.x_page = "EDIT";
+        } else {
+            $scope.x_page = "VIEW";
+        }
         $scope.xElement = $scope.xList.filter(function (e) { return e.ID == item.ID; })[0];
         validateElement($scope.xElement.infoJSON, false);
         initLookups();
@@ -914,7 +978,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             initMap(y);
         }
     };
-    // $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db
+
     $scope.xSave = function (f) {
         if ($scope.x_form === "mydata") {
             $http.post($scope.sloc + 'KB_x_addUpdate?module=KB&table=users&ID=' + $scope.xElement.ID + '&masterID=' + $scope.xElement.masterID + '&orderBy=&parentID=' + $scope.xElement.parentID + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
@@ -935,7 +999,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                         for (v in autoColumns) {
                             $scope.xElement.infoJSON[autoColumns[v]] = av[v] * 1 + 1;
                         }
-                        $http.post($scope.sloc + 'KB_x_addUpdate?module=' + $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID + '&parentID=' + $scope.xElement.parentID + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
+                        $http.post($scope.sloc + 'KB_x_addUpdate?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID + '&parentID=' + $scope.xElement.parentID + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
                             $scope.xCancel(f);
                         }, function (err) {
                             alert("save error");
@@ -944,7 +1008,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                         alert("error auto " + JSON.stringify(err));
                     });
                 } else {
-                    $http.post($scope.sloc + 'KB_x_addUpdate?module=' + $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&parentID=' + $scope.xElement.parentID + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
+                    $http.post($scope.sloc + 'KB_x_addUpdate?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&parentID=' + $scope.xElement.parentID + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
                         $scope.xCancel(f);
                     }, function (err) {
                         alert("save error");
@@ -980,7 +1044,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             } else {
                 vst = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
             }
-            $http.get($scope.sloc + 'KB_x_delete?module=' + $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&subtable=' + vst).then(function (response) {
+            $http.get($scope.sloc + 'KB_x_delete?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&subtable=' + vst).then(function (response) {
                 $scope.xCancel(f);
             }, function (err) {
                 alert("error 4");
@@ -990,7 +1054,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     $scope.xUpDown = function (item, s) {
         $scope.myOrderBy = undefined;
-        $http.get($scope.sloc + 'KB_x_sequencePut?module=' + $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + item.ID + '&masterID=' + $scope.xList.filter(function (e) { return e.ID == item.ID; })[0].masterID + '&s=' + $scope.xList.filter(function (e) { return e.ID == item.ID; })[0].sequence + s + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy).then(function (response) {
+        $http.get($scope.sloc + 'KB_x_sequencePut?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + item.ID + '&masterID=' + $scope.xList.filter(function (e) { return e.ID == item.ID; })[0].masterID + '&s=' + $scope.xList.filter(function (e) { return e.ID == item.ID; })[0].sequence + s + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy).then(function (response) {
             $scope.xInit();
         }, function (err) {
             alert("error 5");
@@ -1172,7 +1236,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         d_m.i.sort();
         $http.post($scope.sloc + 'KB_doc?module=' + $scope.x_o.name, JSON.stringify(d_m)).then(function (response) {
             $scope.xElement.infoJSON[pfield] = response.data; // eg docinv1111-2222-3333
-            $http.post($scope.sloc + 'KB_x_addUpdate?module=' + $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID + '&parentID=' + $scope.xElement.parentID + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
+            $http.post($scope.sloc + 'KB_x_addUpdate?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID + '&parentID=' + $scope.xElement.parentID + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
                 // display doc page
             }, function (err) {
                 alert("save error");
@@ -1180,6 +1244,14 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         }, function (err) {
             alert("doc error");
         });
+    };
+
+    defDB = function (mod, otherdb) {
+        if(otherdb === undefined || otherdb === ""){
+            return mod;
+        } else {
+            return otherdb;
+        }
     };
 
     $scope.spaces = function (level) { // used by tree table
@@ -1272,17 +1344,17 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             var tTo = $scope.xList.filter(function (e) { return e.ID === idTo; });
             if ($scope.x_page == 'TREE') {
                 var parentID = $scope.xList[tTo[0]._sequence].parentID; // TO
-                var sequence = $scope.xList[tTo[0]._sequence].sequence + 5; // TO
+                var sequence = $scope.xList[tTo[0]._sequence].sequence; // TO
                 $scope.xElement = $scope.xList[tFrom[0]._sequence]; // FROM
                 var idFrom = $scope.xElement.ID;  // FROM
                 var dir = prompt("A-bove\nB-elow\nC-hild - make To parent of FROM\nL-ink - make TO child of FROM\nU-link - remove FROM parent in TO", "A");
                 if (dir.toUpperCase() == "A") {
                     $scope.xElement.parentID = parentID;
-                    $scope.xElement.sequence = sequence - 15;
+                    $scope.xElement.sequence = sequence - 5; 
                 }
                 if (dir.toUpperCase() == "B") {
                     $scope.xElement.parentID = parentID;
-                    $scope.xElement.sequence = sequence + 15;
+                    $scope.xElement.sequence = sequence + 5;
                 }
                 if (dir.toUpperCase() == "C") {
                     $scope.xElement.parentID = parentID;
@@ -1301,7 +1373,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                     $scope.xElement.parentID.replace(idFrom,""); // remove id from to-parentID
                 }
                 if(dir !== null){
-                    $http.post($scope.sloc + 'KB_x_addUpdate?module=' + $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.xElement.masterID + '&parentID=' + $scope.xElement.parentID + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
+                    $http.post($scope.sloc + 'KB_x_addUpdate?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.xElement.masterID + '&parentID=' + $scope.xElement.parentID + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
                         $scope.xInit();
                     }, function (err) {
                         alert("drop save error");

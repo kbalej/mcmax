@@ -237,7 +237,7 @@ function start(x_o) {
                         if (c.label !== undefined) { // show fields with label, only
                             var vhide = ""; // label + input
                             if (c.hideIf !== undefined) {
-                                vhide = " ng-hide=\"" + c.hideIf.replace(/_./gi, "xElement.infoJSON.").replace(/::/gi, "'") + "\" "; // replace _ by xElement.infoJSON and :: by '
+                                vhide = " ng-hide=\"" + c.hideIf.replace(/_/gi, "xElement.infoJSON.").replace(/::/gi, "'") + "\" "; // replace _ by xElement.infoJSON and :: by '
                             }
                             switch (c.fieldType) { // label
                                 case "tel":

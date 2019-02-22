@@ -77,7 +77,7 @@
 
         .grid-container {
             display: grid;
-            grid-template-areas: 'logo mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu myMax' 'logo current path path path path path down down down down down' 'pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs';
+            grid-template-areas: 'logo mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu mainMenu myMax' 'logo path path path path path current down down down down down' 'pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs pageTabs';
             grid-gap: 1px;
             padding: 1px;
         }
@@ -144,7 +144,7 @@
                     <div class="mainMenu">
                         <a class="navbar-brand" href="#">{{x_o.name}}</a>
                         <ul class="nav navbar-nav" ng-show="xEditForm.$pristine" ng-repeat="i in x_o.forms">
-                            <li ng-show="!i.parent"><a href="#" ng-click="navMain(i.name)">{{i.name}}</a></li>
+                            <li ng-show="!i.parent && i._R"><a href="#" ng-click="navMain(i.name)">{{i.name}}</a></li>
                         </ul>
                     </div>
                     <div class="path">
@@ -157,7 +157,7 @@
                         <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-arrow-down"></span></a>
                         <ul class="nav navbar-nav" ng-show="xEditForm.$pristine && x_o.forms[x_form].subForms.length > 0"
                             ng-repeat="i in x_o.forms[x_form].subForms">
-                            <li><a href="#" ng-click="navDown(i)">{{i}}</a></li>
+                            <li ng-show="x_o.forms[i]._R"><a href="#" ng-click="navDown(i)">{{i}}</a></li>
                         </ul>
                     </div>
                     <div class="current">
@@ -202,12 +202,12 @@
                 <!--LIST-->
 
                 <div class="panel" ng-show="x_page.substring(0, 4) == 'LIST'">
-                    <span ng-show="x_o.forms[x_form].search">{{xSearchListTitle}}</span> <span ng-show="myOrderBy"> Order
+                    <span ng-show="x_o.forms[x_form].pages.SEARCH">{{xSearchListTitle}}</span> <span ng-show="myOrderBy"> Order
                         by {{myOrderBy.substring(9)}}</span>
                     <input type="range" name="points" min="1" max="{{x_rowsMax}}" step="1" ng-model="x_pageCt" ng-change="xInit()">
                     <div class="btn-group btn-group-justified">
-                        <button ng-click="xAdd()" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
-                        <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
+                        <button ng-click="xAdd()" ng-show="x_o.forms[x_form]._C" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
+                        <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].pages.SEARCH">Search</a>
                         <a href="#" class="btn btn-primary" ng-click="chart()" ng-show="x_o.forms[x_form].pages[x_page].graph">Chart</a>
                         <a href="#" class="btn btn-primary" ng-click="carousel()" ng-show="x_o.forms[x_form].pages[x_page].carousel">Carousel</a>
                         <a href="#" class="btn btn-primary" ng-click="copyTotal()" ng-show="x_o.forms[x_form].pages[x_page].copyTotal">copyTotal</a>
@@ -224,7 +224,7 @@
 
                 <div class="panel" ng-show="x_page == 'TREE'">
                     <div class="btn-group btn-group-justified">
-                        <button ng-click="xAdd()" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
+                        <button ng-click="xAdd()" ng-show="x_o.forms[x_form]._C" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
                         <a href="#" class="btn btn-primary" ng-click="treeCollapse()">collapse all</a>
                         <a href="#" class="btn btn-primary" ng-click="treeExpand()">show all</a>
                     </div>
@@ -233,7 +233,7 @@
                         <tr ng-repeat='item in xTree' id='{{item.ID}}' ng-show='item.show' ondrop='drop(event)' ondragover='allowDrop(event)'
                             draggable='true' ondragstart='drag(event)'>
                             <td>
-                                <pre><a href="#" ng-click="xView(item)"><span class="glyphicon glyphicon-eye-open"></span></a> {{spaces(item.level)}}<button ng-class='getStatusClass(item.parentID)' ng-click='treeClick(item.position)'>{{item.status}}</button> <span class='w3-tooltip'> {{item.display}}<span style="padding-left: 20px" class='w3-text'>{{item.description}}</span></span></pre>
+                                <pre><a href="#" ng-click="xView(xList[item.sequence])"><span class="glyphicon glyphicon-eye-open"></span></a> {{spaces(item.level)}}<button ng-class='getStatusClass(item.parentID)' ng-click='treeClick(item.position)'>{{item.status}}</button> <span class='w3-tooltip'> {{item.display}}<span style="padding-left: 20px" class='w3-text'>{{item.description}}</span></span></pre>
                             </td>
                         </tr>
                     </table>
@@ -261,8 +261,8 @@
                         <div class="btn-group btn-group-justified">
                             <a href="#" class="btn btn-primary" ng-click="xSave(xEditForm)" ng-show="xEditForm.$dirty || xEditFormDirty">Save</a>
                             <a href="#" class="btn btn-primary" ng-click="xCancel(xEditForm)">Cancel</a>
-                            <a href="#" class="btn btn-primary" ng-click="xDelete(xEditForm)" ng-show="xElement.ID">Delete</a>
-                            <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].search">Search</a>
+                            <a href="#" class="btn btn-primary" ng-click="xDelete(xEditForm)" ng-show="xElement.ID && x_o.forms[x_form]._D">Delete</a>
+                            <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].pages.SEARCH">Search</a>
                         </div>
                     </div>
                 </form>

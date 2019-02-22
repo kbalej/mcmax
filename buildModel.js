@@ -56,6 +56,7 @@ function start(vmodules, vforms, vpages, vfields, vtables, vcolumns, querystring
     };
     var t_modules = vmodules.filter(function (e) { return e.infoJSON.name === querystring.module; });
     var o = {};
+    o.ID = t_modules[0].infoJSON.ID;
     o.name = t_modules[0].infoJSON.name;
     o.forms = buildForms(t_modules[0].ID);
     o.tables = buildTables();

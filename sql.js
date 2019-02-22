@@ -304,9 +304,13 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     }
                     var vw = true;
                     if (querystring.masterID !== undefined && querystring.masterID !== "") {
-                        vw = " masterID = '" + querystring.masterID + "' "
+                        if(querystring.masterID == '%'){
+                            vw = " masterID LIKE '%' ";
+                        }else{
+                            vw = " masterID = '" + querystring.masterID + "' ";
+                        }
                     } else {
-                        vw = " masterID = '' "
+                        vw = " masterID = '' ";
                     }
                     var vv = JSON.parse(postData).sql;
                     if (vv !== "") {
