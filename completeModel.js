@@ -226,7 +226,168 @@ function start(x_o) {
                 vhtmlList += "</tr></tbody><tfoot><tr>" + vt + "</tr></tfoot></table></div>";
             }
 
-            //   if (p.substring(0, 4) === "VIEW") { }
+            if (p.substring(0, 4) === "VIEW") {
+                vhtmlView += "<div ng-switch-when='" + x_o.forms[f].pages[p].name + x_o.forms[f].name + "'>";
+                for (fi in x_o.forms[f].pages[p].fields) {
+                    c = ca[x_o.forms[f].pages[p].fields[fi].columnsID];
+                    if (c !== undefined) { 
+                        if (c.label !== undefined) { // show fields with label, only
+                            var vhide = ""; // label + input
+                            if (c.hideIf !== undefined) {
+                                vhide = " ng-hide=\"" + c.hideIf.replace(/_/gi, "xElement.infoJSON.").replace(/::/gi, "'") + "\" "; // replace _ by xElement.infoJSON and :: by '
+                            }
+                            switch (c.fieldType) { // label
+                                case "tel":
+                                    vhtmlView += "<label for='" + "V" + x_o.forms[f].name + c.name + "'" + vhide + "><a href='tel:{{xElement.infoJSON." + c.name + "}}' target='_blank'><span ng-if='xElement.infoJSON." + c.name + "' class='glyphicon glyphicon-earphone'></span></a></label >";
+                                    break;
+                                case "email":
+                                    vhtmlView += "<label for='" + "V" + x_o.forms[f].name + c.name + "'" + vhide + "><a href='mailto:{{xElement.infoJSON." + c.name + "}}' target='_blank'><span ng-if='xElement.infoJSON." + c.name + "' class='glyphicon glyphicon-envelope'></span></a></label >";
+                                    break;
+                                case "url":
+                                    vhtmlView += "<label for='" + "V" + x_o.forms[f].name + c.name + "'" + vhide + "><a href='{{xElement.infoJSON." + c.name + "}}' target='blank'><span ng-if='xElement.infoJSON." + c.name + "'>http</span></a></label >";
+                                    break;
+                                case "image":
+                                    break;
+                                case "map":
+                                    break;
+                                default:
+                                    vhtmlView += "<label for='" + "V" + x_o.forms[f].name + c.name + "'" + vhide + ">" + c.label + "</label >";
+                                    break;
+                            }
+                            switch (c.fieldType) { // input 
+                                case "text":
+                                case "password":
+                                case "email":
+                                case "url":
+                                case "month":
+                                case "time":
+                                case "week":
+                                case "checkBox":
+                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='" + c.fieldType + "' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    break;
+                                case "date":
+                                case "local":
+                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='date' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    break;
+                                case "datetime":
+                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='datetime-local' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    break;
+                                case "number": // input type number does not display value, replaced by text
+                                    if (c.autoNumber || c.calcNumber) { // readonly
+                                        vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' readonly >";
+                                        if (c.autoNumber && !vFieldsAuto.includes(c.name)) {
+                                            vFieldsAuto += c.name + ",";
+                                        }
+                                        if (c.totalNumber && !vFieldsTotal.includes(c.name)) {
+                                            vFieldsTotal += c.name + ",";
+                                        }
+                                    } else {
+                                        vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    }
+                                    break;
+                                case "textArea":
+                                    vhtmlView += "<textarea readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " rows='" + c.rows + "' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ></textarea>";
+                                    break;
+                                case "image":
+                                    vhtmlView += "<div class='form-group'><div class='row'><div class='col-xs-8'>";
+                                    vhtmlView += "<label>" + c.label + " </label>";
+                                    vhtmlView += "<img ng-src=\"{{xElement.infoJSON." + c.name + "Path}}\" class='img-rounded' width='150'>";
+                                    vhtmlView += "</div><div class='col-xs-4'>";
+                                    vhtmlView += "<a href='#' onclick='$(\"#" + x_o.forms[f].name + c.name + "\").trigger(\"click\");' class='btn btn-default' role='button'>Select</a>";
+                                    vhtmlView += "<button onclick='removePicture(\"" + c.name + "\")' class='btn btn-default' ng-show='xElement.infoJSON." + x_o.forms[f].name + c.name + "'><span class='glyphicon glyphicon-trash'></span></button>";
+                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' type='file' style='display:none' class='form-control' accept='image/*' onchange='changePicture(\"" + x_o.forms[f].name + c.name + "\",\"" + c.name + "\");' ng-model='xElement.infoJSON." + c.name + "'>";
+                                    vhtmlView += "</div></div></div>";
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Path' ng-model='xElement.infoJSON." + c.name + "Path'>";
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Image Width' ng-model='xElement.infoJSON." + c.name + "Width'>";
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Image Height' ng-model='xElement.infoJSON." + c.name + "Height'>";
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Capture' ng-model='xElement.infoJSON." + c.name + "Capture'>";
+                                    vhtmlView += "<textarea readonly rows='5' class='form-control' placeholder='Enter Comment' ng-model='xElement.infoJSON." + c.name + "Comment'></textarea>";
+                                    break;
+                                case "map":
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Map Width' ng-model='xElement.infoJSON." + c.name + "Width'>";
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Mag Height' ng-model='xElement.infoJSON." + c.name + "Height'>";
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Capture' ng-model='xElement.infoJSON." + c.name + "Capture'>";
+                                    vhtmlView += "<textarea readonly rows='5' class='form-control' placeholder='Enter Comment' ng-model='xElement.infoJSON." + c.name + "Comment'></textarea>";
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Longitude' readonly ng-model='xElement.infoJSON." + c.name + "Longitude'>";
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Latitude' readonly ng-model='xElement.infoJSON." + c.name + "Latitude'>";
+                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Zoom' readonly ng-model='xElement.infoJSON." + c.name + "Zoom'>";
+                                    break;
+                                case "doc":
+                                    vhtmlView += "<a href='{{sloc}}{{xElement.infoJSON." + c.name + "}}.html' target='_blank'> {{xElement.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='doc(\"" + c.name + "\")' value='create doc and save' >";
+                                    break;
+                                case "lookup":
+                                    if (c.source === "table") {
+                                        vhtmlView += "<select readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
+                                        if (c.lookupFields == undefined) {
+                                            c.lookupFields = ''
+                                        }
+                                        vhtmlView += "ng-change=\"select(xElement.infoJSON." + c.name + ",'" + c.lookup + "');completeLookupField('xElement',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "');\" >";
+                                        vhtmlView += "<OPTION ng-repeat='item in x_o.lookups." + c.lookup + ".tree1' value='{{item.ID}}' ng-selected='item.sel' > ";
+                                        vhtmlView += "{{spacesListTree(item.level)}} {{item.name}} </OPTION> ";
+                                    }
+                                    if (c.source === "model") {
+                                        vhtmlView += "<select readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
+                                        vhtmlView += " ng-options='" + c.modelPath + "' >";
+                                        if (c.other) {
+                                            vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter free text option' ng-model='xElement.infoJSON." + c.name + "'>";
+                                        }
+                                    }
+                                    if (c.source === "specific") {
+                                        vhtmlView += "<select readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    }
+                                    if (c.specific !== undefined) {
+                                        result = c.specific.match(/\w+/g);
+                                        for (x in result) {
+                                            if (result[x] === "_") {
+                                                vhtmlView += "<option value = '' > -- none --</option>";
+                                            } else {
+                                                vhtmlView += "<option value = '" + result[x] + "' >" + result[x] + "</option>";
+                                            }
+                                        }
+                                    }
+                                    vhtmlView += "</select>";
+                                    break;
+                            }
+                        }
+                        if (c.fieldType === "date" || c.fieldType === "local") { //  || c.fieldType === "datetime" || c.fieldType === "month" || c.fieldType === "time" || c.fieldType === "week"
+                            if (!vFieldsDate.includes(c.name)) {
+                                vFieldsDate += c.name + ",";
+                            }
+                        }
+                        if (c.fieldType === "checkBox") {
+                            if (!vFieldsCheckbox.includes(c.name)) {
+                                vFieldsCheckbox += c.name + ",";
+                            }
+                        }
+                        if (c.fieldType === "map") {
+                            if (!vFieldsMap.includes(c.name)) {
+                                vFieldsMap += c.name + ",";
+                            }
+                        }
+                        if (c.fieldType === "image") {
+                            if (!vFieldsImage.includes(c.name)) {
+                                vFieldsImage += c.name + ",";
+                            }
+                        }
+                        if (c.fieldType === "lookup" && c.source === "table") {
+                            if (!vFieldsLookup.includes(c.name)) {
+                                vFieldsLookup += c.name + ",";
+                            }
+                            if (!vFieldsLookup2.includes(c.lookup)) {
+                                // set up lookups
+                                vFieldsLookup2 += c.lookup + ",";
+                                x_o.lookups[c.lookup] = {};
+                                x_o.lookups[c.lookup].name = c.lookup;
+                                x_o.lookups[c.lookup].getParameters = c.lookup + "&orderBy=" + x_o.forms[c.lookup].orderBy;
+                                x_o.lookups[c.lookup].collection = [];
+                                x_o.lookups[c.lookup].masterLookup = c.masterLookup;
+                                // load function defined in Script.js
+                            }
+                        }
+                    }
+                }
+                vhtmlView += "</div>";
+            }
 
             if (p.substring(0, 4) === "EDIT") {
                 vhtmlEdit += "<div ng-switch-when='" + x_o.forms[f].pages[p].name + x_o.forms[f].name + "'>";
@@ -320,6 +481,15 @@ function start(x_o) {
                                     break;
                                 case "dbtc":
                                     vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='dbtc(\"" + c.name + "\",xElement.infoJSON.db,xElement.infoJSON.name)' value='create db table' >";
+                                    break;
+                                case "bDB":
+                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' class='form-control' ng-click='bDB(\"" + c.name + "\",xElement.ID,xElement.infoJSON.name)' value='backup db to mongo and mysql' >";
+                                    break;
+                                case "cModule":
+                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' class='form-control' ng-click='cModule(\"" + c.name + "\",xElement.infoJSON.name)' value='create module from diagram' >";
+                                    break;
+                                case "cTables":
+                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' class='form-control' ng-click='cTables(xElement.infoJSON.name, xElement.ID)' value='create tables from diagram' >";
                                     break;
                                 case "lookup":
                                     if (c.source === "table") {
