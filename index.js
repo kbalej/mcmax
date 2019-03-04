@@ -19,5 +19,8 @@ handle["/KB_doc"] = requestHandlers.KB_doc;
 handle["/KB_chart"] = requestHandlers.KB_chart;
 handle["/KB_carousel"] = requestHandlers.KB_carousel;
 handle["/KB_table"] = requestHandlers.KB_table;
+handle["/KB_query"] = requestHandlers.KB_query;
+handle["/KB_bDB"] = requestHandlers.KB_bDB;
+handle["/KB_cModule"] = requestHandlers.KB_cModule;
 handle["KB_showFile"] = requestHandlers.KB_showFile;
 server.start(router.route, handle,dbh);

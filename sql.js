@@ -4,6 +4,8 @@ var TYPES = require('tedious').TYPES;
 var buildModel = require("./buildModel");
 var fs = require('fs');
 var sss = require('./sss');
+var exportMongo = require('./exportMongo');
+var exportMySql = require('./exportMySql');
 
 var cvt = function (result) {
     var o = [];
@@ -77,9 +79,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                 case "KB_buildModel":
                     var request0 = new Request("SELECT * FROM KB_modules FOR JSON PATH; SELECT * FROM KB_forms ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_pages ORDER BY sequence FOR JSON PATH;	SELECT * FROM KB_fields ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_tables FOR JSON PATH; SELECT * FROM KB_columns FOR JSON PATH;", function (err, rowCount, rows) {
                         if (err) {
-                            response.writeHead(300, {
-                                "Content-Type": "text/plain"
-                            });
+                            response.writeHead(300, {"Content-Type": "text/plain"});
                             response.write(JSON.stringify(err));
                             response.end();
                             connection.close();
@@ -153,6 +153,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     return;
                 case "KB_table":
                     var vtable = querystring.module + "_" + querystring.table;
+                    var vs = "IF EXISTS(SELECT * FROM " + vtable + ") DROP TABLE " + vtable;
                     var vsql = "CREATE TABLE " + vtable + "( [ID] nvarchar(50) NOT NULL, [masterID] nvarchar(50) NULL, [parentID] nvarchar(500) NULL,";
                     vsql += "[sequence] [int] NULL, [ts] [timestamp] NULL, uid nvarchar(50) NULL, [name] AS (json_value([infoJSON],'$.name')), ";
                     vsql += "[date] AS (json_value([infoJSON],'$.date')), [infoJSON] nvarchar(max) NULL, "; // use ISO _date 
@@ -164,17 +165,63 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_masterID] ON " + vtable + " ([masterID] ASC) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY];";
                     vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_name] ON " + vtable + " ([name] ASC) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY];";
                     vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_date] ON " + vtable + " ([date] ASC) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY];";
-                    var request10 = new Request(vsql, function () {});
+                    var request10 = new Request(vs, function () {});
                     request10.on('requestCompleted', function () {
-                        var rv = "db table created " + new Date().toISOString();
-                        response.writeHead(200, {
-                            "Content-Type": "text/plain"
+                        var request14 = new Request(vsql, function () {});
+                        request14.on('requestCompleted', function () {
+                            var rv = "db table created " + new Date().toISOString();
+                            response.writeHead(200, {"Content-Type": "text/plain"});
+                            response.write(rv);
+                            response.end();
+                            connection.close();
                         });
-                        response.write(rv);
-                        response.end();
-                        connection.close();
+                        connection.execSql(request14);
                     });
                     connection.execSql(request10);
+                    return;
+                case "KB_query":
+                    var vtable = querystring.module + "_" + querystring.table;
+                    vsql = "IF EXISTS(SELECT 1 FROM sys.views WHERE name = '" + vtable + "' AND type = 'v') DROP VIEW v" + vtable;
+                    vsql1 = "CREATE VIEW v" + vtable+ " " + " AS SELECT TOP(100) PERCENT " + postData;
+                    vsql1 += " FROM " + vtable + ";";
+                    var request12 = new Request(vsql, function () {});
+                    request12.on('requestCompleted', function () {
+                        var request13 = new Request(vsql1, function () {});
+                        request13.on('requestCompleted', function () {
+                            var rv = "query created " + new Date().toISOString();
+                            response.writeHead(200, {"Content-Type": "text/plain"});
+                            response.write(rv);
+                            response.end();
+                            connection.close();
+                        });
+                        connection.execSql(request13);
+                    });
+                    connection.execSql(request12);
+                    return;
+                case "KB_bDB":
+                    vrows = "";
+                    var vsql = "SELECT name FROM KB_tables WHERE masterID = '" + querystring.masterID + "' AND JSON_VALUE(infoJSON, '$.db') = '' for json path;";  // for module tables only
+                    var request11 = new Request(vsql, function () {});
+                    request11.on('row', function (rows) {
+                        vrows += rows[0].value;
+                    });
+                    request11.on('requestCompleted', function () {
+                        var tt = JSON.parse(vrows);
+                        var t = [];
+                        for(var x in tt) {
+                            t.push(querystring.module + "_" + tt[x].name)
+                        }
+                        exportMySql.start(querystring.module,t, connection,function (err, s){
+                            exportMongo.start(querystring.module,t,connection,function (err, s){
+                                var rv = "db backup created " + new Date().toISOString();
+                                response.writeHead(200, {"Content-Type": "text/plain"});
+                                response.write(rv);
+                                response.end();
+                                connection.close();
+                            });
+                        });
+                    });
+                    connection.execSql(request11);
                     return;
                 case "KB_chart":
                     vrows = "";
@@ -293,13 +340,16 @@ function start(storedProcedure, response, postData, querystring, callback) {
                             vob += " , ";
                         }
                         var xx = x[v].split(":")
-                        if (xx[0] === "sequence" || xx[0] === "date") {
+                        if (xx[0] === "sequence" || xx[0] === "name" || xx[0] === "date") {
                             vob += " " + xx[0];
                         } else {
                             vob += " JSON_VALUE(infoJSON, '$." + xx[0] + "')";
                         }
                         if (xx[1] === "D") {
                             vob += " DESC ";
+                        }
+                        if (xx[0] === "sequence") {
+                            vob += ", name";  // for repeated sequence = 0
                         }
                     }
                     var vw = true;
@@ -366,6 +416,9 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     request.addParameter('parentID', TYPES.NVarChar, querystring.parentID, {
                         length: 500
                     });
+                    request.addParameter('orderBy', TYPES.NVarChar, querystring.orderBy, {
+                        length: 50
+                    });
                     request.addParameter('uid', TYPES.NVarChar, querystring.uid, {
                         length: 50
                     });
@@ -373,6 +426,9 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     request.addParameter('objJSON', TYPES.NVarChar, postData, {
                         length: 9000
                     });
+                    request.addOutputParameter('nid', TYPES.NVarChar, {
+                        length: 50
+                    });  
                     break;
                 case "KB_n_delete":
                     request.addParameter('module', TYPES.NVarChar, querystring.module, {
@@ -412,8 +468,16 @@ function start(storedProcedure, response, postData, querystring, callback) {
                 response.writeHead(200, {
                     "Content-Type": "text/plain"
                 });
-                response.write(rv);
+                response.write(rv); // response.data, new ID after insert
                 response.end();
+            });
+            request.on('error', function (err) {
+                response.writeHead(300, {
+                    "Content-Type": "text/plain"
+                });
+                response.write(JSON.stringify(err));
+                response.end();
+                connection.close();
             });
             connection.callProcedure(request);
         }

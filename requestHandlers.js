@@ -28,6 +28,18 @@ function KB_table(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'KB_table' was called.");
     dbh.start("KB_table", response, postData, querystring);
 }
+function KB_query(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_query' was called.");
+    dbh.start("KB_query", response, postData, querystring);
+}
+function KB_bDB(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_bDB' was called.");
+    dbh.start("KB_bDB", response, postData, querystring);
+}
+function KB_cModule(response, postData, pathname, querystring, request, dbh) {
+    console.log("Request handler 'KB_cModule' was called.");
+    dbh.start("KB_cModule", response, postData, querystring);
+}
 function KB_doc(response, postData, pathname, querystring, request, dbh) {
     console.log("Request handler 'KB_doc' was called.");
     var d_m = JSON.parse(postData);
@@ -170,4 +182,7 @@ exports.KB_doc = KB_doc;
 exports.KB_chart = KB_chart;
 exports.KB_carousel = KB_carousel;
 exports.KB_table = KB_table;
+exports.KB_query = KB_query;
+exports.KB_bDB = KB_bDB;
+exports.KB_cModule = KB_cModule;
 exports.KB_showFile = KB_showFile;

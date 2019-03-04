@@ -140,8 +140,6 @@ function start(x_o) {
                                         // field must be included in EDIT pages to define x_o.lookups
                                         if (c.lookupFields === undefined) {
                                             c.lookupFields = ''
-                                        } else {
-                                            console.log(c.lookupFields);
                                         }
                                         vhtmlSearch += " ng-change=\"completeLookupField('xSearch',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "')\" ng-options='it.ID as it.name for it in x_o.lookups." + c.lookup + ".collection'";
                                     }
@@ -289,28 +287,22 @@ function start(x_o) {
                                     vhtmlView += "<textarea readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " rows='" + c.rows + "' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ></textarea>";
                                     break;
                                 case "image":
-                                    vhtmlView += "<div class='form-group'><div class='row'><div class='col-xs-8'>";
-                                    vhtmlView += "<label>" + c.label + " </label>";
-                                    vhtmlView += "<img ng-src=\"{{xElement.infoJSON." + c.name + "Path}}\" class='img-rounded' width='150'>";
-                                    vhtmlView += "</div><div class='col-xs-4'>";
-                                    vhtmlView += "<a href='#' onclick='$(\"#" + x_o.forms[f].name + c.name + "\").trigger(\"click\");' class='btn btn-default' role='button'>Select</a>";
-                                    vhtmlView += "<button onclick='removePicture(\"" + c.name + "\")' class='btn btn-default' ng-show='xElement.infoJSON." + x_o.forms[f].name + c.name + "'><span class='glyphicon glyphicon-trash'></span></button>";
-                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' type='file' style='display:none' class='form-control' accept='image/*' onchange='changePicture(\"" + x_o.forms[f].name + c.name + "\",\"" + c.name + "\");' ng-model='xElement.infoJSON." + c.name + "'>";
-                                    vhtmlView += "</div></div></div>";
-                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Path' ng-model='xElement.infoJSON." + c.name + "Path'>";
-                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Image Width' ng-model='xElement.infoJSON." + c.name + "Width'>";
-                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Image Height' ng-model='xElement.infoJSON." + c.name + "Height'>";
-                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Capture' ng-model='xElement.infoJSON." + c.name + "Capture'>";
-                                    vhtmlView += "<textarea readonly rows='5' class='form-control' placeholder='Enter Comment' ng-model='xElement.infoJSON." + c.name + "Comment'></textarea>";
+                                    vhtmlEdit += "<div class='form-group'><div class='row'><div class='col-xs-8'>";
+                                    vhtmlEdit += "<label>" + c.label + " </label>";
+                                    vhtmlEdit += "<img ng-src=\"{{xElement.infoJSON." + c.name + "Path}}\" class='img-rounded' width=\"{{xElement.infoJSON." + c.name + "Width}}\" height=\"{{xElement.infoJSON." + c.name + "Height}}\">";
+                                    vhtmlEdit += "</div></div></div>";
+                                    vhtmlEdit += "<input readonly type='text' class='form-control' placeholder='Enter Capture' ng-model='xElement.infoJSON." + c.name + "Capture'>";
+                                    vhtmlEdit += "<textarea readonly rows='5' class='form-control' placeholder='Enter Comment' ng-model='xElement.infoJSON." + c.name + "Comment'></textarea>";
                                     break;
+                                case "utube":
+                                    vhtmlEdit += "<div class='form-group'><div class='row'><div class='col-xs-8'>";
+                                    vhtmlEdit += "<label>" + c.label + " </label>";
+                                    vhtmlEdit += "<iframe width=\"{{xElement.infoJSON." + c.name + "Width}}\" height=\"{{xElement.infoJSON." + c.name + "Height}}\" ng-src=\"{{xElement.infoJSON." + c.name + "Path}}\"></iframe>";
+                                    vhtmlEdit += "</div>";
+                                    break;  
                                 case "map":
-                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Map Width' ng-model='xElement.infoJSON." + c.name + "Width'>";
-                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Mag Height' ng-model='xElement.infoJSON." + c.name + "Height'>";
                                     vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter Capture' ng-model='xElement.infoJSON." + c.name + "Capture'>";
                                     vhtmlView += "<textarea readonly rows='5' class='form-control' placeholder='Enter Comment' ng-model='xElement.infoJSON." + c.name + "Comment'></textarea>";
-                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Longitude' readonly ng-model='xElement.infoJSON." + c.name + "Longitude'>";
-                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Latitude' readonly ng-model='xElement.infoJSON." + c.name + "Latitude'>";
-                                    vhtmlView += "<input readonly type='text' class='form-control' placeholder='Zoom' readonly ng-model='xElement.infoJSON." + c.name + "Zoom'>";
                                     break;
                                 case "doc":
                                     vhtmlView += "<a href='{{sloc}}{{xElement.infoJSON." + c.name + "}}.html' target='_blank'> {{xElement.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='doc(\"" + c.name + "\")' value='create doc and save' >";
@@ -391,7 +383,11 @@ function start(x_o) {
 
             if (p.substring(0, 4) === "EDIT") {
                 vhtmlEdit += "<div ng-switch-when='" + x_o.forms[f].pages[p].name + x_o.forms[f].name + "'>";
-                vhtmlEdit += "<fieldset oninput='" + x_o.forms[f].pages[p].calcFormula.replace(/::/gi, x_o.forms[f].name) + "'>"
+                if(x_o.tables[x_o.forms[f].tablesID].calcFormula == undefined){
+                    vhtmlEdit += "<fieldset oninput=''>";
+                }else{
+                    vhtmlEdit += "<fieldset oninput='" + x_o.tables[x_o.forms[f].tablesID].calcFormula.replace(/::/gi, x_o.forms[f].name) + "'>";
+                }
                 for (fi in x_o.forms[f].pages[p].fields) {
                     c = ca[x_o.forms[f].pages[p].fields[fi].columnsID];
                     if (c !== undefined) { // skip pages without fields
@@ -455,7 +451,7 @@ function start(x_o) {
                                 case "image":
                                     vhtmlEdit += "<div class='form-group'><div class='row'><div class='col-xs-8'>";
                                     vhtmlEdit += "<label>" + c.label + " </label>";
-                                    vhtmlEdit += "<img ng-src=\"{{xElement.infoJSON." + c.name + "Path}}\" class='img-rounded' width='150'>";
+                                    vhtmlEdit += "<img ng-src=\"{{xElement.infoJSON." + c.name + "Path}}\" class='img-rounded' width=\"{{xElement.infoJSON." + c.name + "Width}}\" height=\"{{xElement.infoJSON." + c.name + "Height}}\">";
                                     vhtmlEdit += "</div><div class='col-xs-4'>";
                                     vhtmlEdit += "<a href='#' onclick='$(\"#" + x_o.forms[f].name + c.name + "\").trigger(\"click\");' class='btn btn-default' role='button'>Select</a>";
                                     vhtmlEdit += "<button onclick='removePicture(\"" + c.name + "\")' class='btn btn-default' ng-show='xElement.infoJSON." + x_o.forms[f].name + c.name + "'><span class='glyphicon glyphicon-trash'></span></button>";
@@ -467,6 +463,15 @@ function start(x_o) {
                                     vhtmlEdit += "<input type='text' class='form-control' placeholder='Enter Capture' ng-model='xElement.infoJSON." + c.name + "Capture'>";
                                     vhtmlEdit += "<textarea rows='5' class='form-control' placeholder='Enter Comment' ng-model='xElement.infoJSON." + c.name + "Comment'></textarea>";
                                     break;
+                                case "utube":
+                                    vhtmlEdit += "<div class='form-group'><div class='row'><div class='col-xs-8'>";
+                                    vhtmlEdit += "<label>" + c.label + " </label>";
+                                    vhtmlEdit += "<iframe width=\"{{xElement.infoJSON." + c.name + "Width}}\" height=\"{{xElement.infoJSON." + c.name + "Height}}\" ng-src=\"{{xElement.infoJSON." + c.name + "Path}}\"></iframe>";
+                                    vhtmlEdit += "</div>";
+                                    vhtmlEdit += "<input type='text' class='form-control' placeholder='Enter Path' ng-model='xElement.infoJSON." + c.name + "Path'>";
+                                    vhtmlEdit += "<input type='text' class='form-control' placeholder='Enter uTube Width' ng-model='xElement.infoJSON." + c.name + "Width'>";
+                                    vhtmlEdit += "<input type='text' class='form-control' placeholder='Enter utube Height' ng-model='xElement.infoJSON." + c.name + "Height'>";
+                                    break;                                
                                 case "map":
                                     vhtmlEdit += "<input type='text' class='form-control' placeholder='Enter Map Width' ng-model='xElement.infoJSON." + c.name + "Width'>";
                                     vhtmlEdit += "<input type='text' class='form-control' placeholder='Enter Mag Height' ng-model='xElement.infoJSON." + c.name + "Height'>";
@@ -480,13 +485,16 @@ function start(x_o) {
                                     vhtmlEdit += "<a href='{{sloc}}{{xElement.infoJSON." + c.name + "}}.html' target='_blank'> {{xElement.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='doc(\"" + c.name + "\")' value='create doc and save' >";
                                     break;
                                 case "dbtc":
-                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='dbtc(\"" + c.name + "\",xElement.infoJSON.db,xElement.infoJSON.name)' value='create db table' >";
+                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.ID === \"\"' class='form-control' ng-click='dbtc(\"" + c.name + "\",xElement.masterID,xElement.ID,xElement.infoJSON.name)' value='create db table' >";
                                     break;
+                                case "dbqc":
+                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.ID === \"\"' class='form-control' ng-click='dbqc(\"" + c.name + "\",xElement.masterID,xElement.ID,xElement.infoJSON.name)' value='create query for db table' >";
+                                    break;                                
                                 case "bDB":
                                     vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' class='form-control' ng-click='bDB(\"" + c.name + "\",xElement.ID,xElement.infoJSON.name)' value='backup db to mongo and mysql' >";
                                     break;
                                 case "cModule":
-                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' class='form-control' ng-click='cModule(\"" + c.name + "\",xElement.infoJSON.name)' value='create module from diagram' >";
+                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' class='form-control' ng-click='cModule(xElement.infoJSON.name, xElement.ID)' value='create module from diagram' >";
                                     break;
                                 case "cTables":
                                     vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' class='form-control' ng-click='cTables(xElement.infoJSON.name, xElement.ID)' value='create tables from diagram' >";

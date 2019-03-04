@@ -19,7 +19,6 @@ function start(route, handle,dbh) {
         }
     }
     var port=process.env.PORT || 8888;
-//    var port=1337;
     http.createServer(onRequest).listen(port, "0.0.0.0");
     console.log("Server has started.");
 }
