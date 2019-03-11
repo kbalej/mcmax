@@ -1,3 +1,16 @@
+var userid = "";
+var usrname = "";
+var usraccess = "";
+var h = localStorage.getItem("userid");
+var h1 = localStorage.getItem("usrname");
+var h2 = localStorage.getItem("usraccess");
+if(h2 == undefined){h2="";}
+if(h !== undefined && h !== "") {
+    userid = h;
+    usrname = h1;
+    usraccess = h2;
+}
+
 var mmApp = angular.module("mmApp", ['ngSanitize']);
 mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
@@ -49,13 +62,163 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             };
         }
     }
+ 
+    $scope.socket = io();
+
+    $scope.socket.on("system",function(message){
+        if($scope.SelMessaging == "system"){
+            var o = {};
+            var d = new Date();
+            o.time = d.getHours()+":"+d.getMinutes();
+            o.from = "system";
+            o.to = "all";
+            o.message = message;
+            $scope.xMessages.unshift(o);
+            while($scope.xMessages.length > 20){$scope.xMessages.pop();}
+        }
+    });
+
+    $scope.socket.on("user",function(message){
+        var o = JSON.parse(message);
+        if($scope.SelMessaging == "private" && o.to == usrname){
+            $scope.xMessages.unshift(o);
+            while($scope.xMessages.length > 20){$scope.xMessages.pop();}
+        }
+        if($scope.SelMessaging == "all"){
+            $scope.xMessages.unshift(o);
+            while($scope.xMessages.length > 20){$scope.xMessages.pop();}
+        }
+    });
+
+    $scope.xMessages = [];
+    $scope.SelMessaging = "system";
+    $scope.messageFor = "";
+    $scope.messageBody = "";
+    $scope.messageSend = function () {
+        if($scope.messageBody !== ""){
+            var o = {};
+            var d = new Date();
+            o.time = d.getHours()+":"+d.getMinutes();
+            o.from = usrname;
+            o.to = $scope.messageFor;
+            o.message = $scope.messageBody;
+            //$scope.socket.emit("server",JSON.stringify(o)); not working
+            $http.post($scope.sloc + 'KB_sendMessage?module=KB', JSON.stringify(o)).then
+            (function (response) {
+                $scope.messageFor = "";
+                $scope.messageBody = "";
+            }, function (err) {
+                alert("send message error");
+            }); 
+        }
+    }
+    
+    $scope.x_form = " ";
+    $scope.x_page= " ";
+    $scope.mainForms = [];
+    for(var x in $scope.x_o.forms) {
+        if($scope.x_o.forms[x].parent == undefined || $scope.x_o.forms[x].parent == '' && $scope.x_o.forms[x]._R)
+        {
+            $scope.mainForms.push($scope.x_o.forms[x]);
+        }
+    }
+    
+    $scope.SelMod = $scope.x_o.name;
+    $scope.SelLevel = "";
+    $scope.SelRole = "";
+    $scope.AvailableModules = $scope.x_o.dbs;
+    $scope.AvailableModules["0"]={"name":"refresh"};
+    $scope.AvailableLevels = ["KB","Administrator","Superuser","User","Guest"];
+
+
+    $http.post($scope.sloc + 'KB_getStats', "").then(function (response) {
+        var h = "[" + response.data + "]";
+        var h1 = eval(h);
+        $scope.data1 = h1[0];
+        $scope.data2 = h1[1];
+   
+        var years1 = [];
+        for (var i = 0; i < $scope.data1.length; i++) {
+            Element = $scope.data1[i];
+            var year = {
+                label: Element.nYear.substring(8,10),   // last 2 characters = day
+                y: Element.Tnet
+            };
+            years1.push(year);
+        }
+        str = JSON.stringify(years1);
+        var ress1 = str.replace(/"/g, "");
+        ress1 = ress1.replace(/label:/g, 'label: "');
+        ress1 = ress1.replace(/,y:/g, '", y: ');
+   
+        var services = [];
+        for (var i = 0; i < $scope.data2.length; i++) {
+            Element = $scope.data2[i];
+            var s = {
+                label: Element.Service,
+                y: Element.Tnet
+            };
+            services.push(s);
+        }
+        str = JSON.stringify(services);
+        var ress2 = str.replace(/"/g, "");
+        ress2 = ress2.replace(/label:/g, 'label: "');
+        ress2 = ress2.replace(/,y:/g, '", y: ');
+    
+        $scope.chart1 = new CanvasJS.Chart("chartContainer1", 
+        {
+            title: {
+                text: "logins"
+            },
+            data: [
+                {
+                    type: "splineArea",
+                    dataPoints: eval(ress1)
+                }
+            ]
+        }
+        );
+        $scope.chart1.render();
+        $scope.chart2 = new CanvasJS.Chart("chartContainer2", 
+        {
+            title: {
+                text: "top 10"
+            },
+            data: [
+                {
+                    // Change type to "doughnut", "line", "splineArea", etc.
+                    type: "doughnut",
+                    dataPoints: eval(ress2)
+                }
+            ]
+        });
+        $scope.chart2.render();
+    
+    }, function (err) {
+        alert("get stats error");
+    }); 
 
     $scope.x_n = [];
+    $scope.xElement = {};
+    $scope.topName="";
+
+    $scope.changeModule = function(){
+        if($scope.SelMod=='refresh'){$scope.SelMod=$scope.x_o.name;};
+        window.open($scope.sloc + "HTML.html?module="+$scope.SelMod,'_self',false);
+    };
+
+    if($scope.x_n.length>0){
+        if($scope.x_n[$scope.x_n.length-1].xElement.name == undefined){
+            $scope.topName = "details " + $scope.x_form;
+        }else{
+            $scope.topName = $scope.x_n[$scope.x_n.length-1].xElement.name + " " + $scope.x_form;
+        }
+    } else {
+        $scope.topName = $scope.x_form;
+    }
     $scope.x_rowsPage = 20;
     $scope.x_rowsMax = 1;
     $scope.x_pageCt = 1;
-    $scope.x_form = "";
-    $scope.x_page= "";
 
     var ca = $scope.x_o.columns;
     var c = {};
@@ -69,6 +232,9 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     $scope.mymenu = function (e) {
         if (e === "quit") {
+            localStorage.removeItem("userid")
+            localStorage.removeItem("usrname")
+            localStorage.removeItem("usraccess")
             window.close();
         };
         if (e === "mydata") {
@@ -317,17 +483,25 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         }
     };
 
+    $scope.getDescripton = function (subform) { // get description for subform
+        return $scope.x_o.forms[subform].description;
+    };
 
     // when starting add / view. for table lookup 
 
     initLookups = function () {
+        for(var x in $scope.x_o.lookups){
+            if($scope.x_o.lookups[x].masterLookup === $scope.x_o.forms[$scope.x_form].tablesName){
+                $scope.x_o.lookups[x].masterID = $scope.xElement.ID;
+                $scope.x_o.lookups[x].load();
+            }
+        }
         var lu;
         var y = "" + $scope.x_o.forms[$scope.x_form].fieldsLookup;
         var x = y.split(",");
         if (x[0] !== undefined && x[0] !== "") {
             for (var v in x) {
                 var vlookup = x[v].substring(0, x[v].length - 2);
-                //$scope.x_o.lookups[vlookup].load();
                 if ($scope.xElement.infoJSON[x[v]] !== undefined) {
                     if ($scope.x_o.lookups[vlookup] !== undefined) {
                         if ($scope.x_o.lookups[vlookup].masterLookup !== undefined && $scope.x_o.lookups[vlookup].masterLookup !== null) { // sublevel
@@ -344,7 +518,6 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                                         $scope.x_o.lookups[lu].masterName = $scope.xElement.infoJSON[$scope.x_o.lookups[lu].name + 'masterName'];
                                         $scope.x_o.lookups[lu].load();
                                     }
-                                    //alert(JSON.stringify($scope.x_o.lookups[lu]));
                                 }
                             }
                         } else {
@@ -526,33 +699,29 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     // *** login page
 
+
     $scope.x_page = "LOGIN";
     $scope.error = "";
     $scope.login = {
         "usrname": "",
         "password": ""
     };
-    var userid = "";
 
-    $scope.log_in = function () {
+    if(userid !== undefined && userid !== "" && userid !== null){
         var searchParameters = [];
         var o = {};
-        o.field = "un";
+        o.field = "ID";
         o.compare = "EQUAL";
-        o.value = $scope.login.usrname;
-        searchParameters.push(o);
-        o = {};
-        o.field = "pwd";
-        o.compare = "EQUAL";
-        o.value = $scope.login.password;
+        o.value = userid;
         searchParameters.push(o);
         $scope.xSearchSql = {};
         $scope.xSearchSql.params = searchParameters; // array of objects: field, compare, value
-        $scope.xSearchSql.sql = "JSON_VALUE(infoJSON,'$.un') = '" + $scope.login.usrname + "' and JSON_VALUE(infoJSON,'$.pwd') = '" + $scope.login.password + "'";
+        $scope.xSearchSql.sql = "ID = '" + userid + "'";
+        $scope.login.usrname = usrname;
         $http.post($scope.sloc + "KB_x_getAll?module=KB&table=users&jsonFields=&orderBy=name&masterID=%&rowsPage=1&pageCt=1", JSON.stringify($scope.xSearchSql)).then
             (function (response) {
+                debugger;
                 if (response.data.rv.length > 0) {
-                    userid = response.data.rv[0].ID;
                     $scope.myData = response.data.rv[0];
                     if($scope.myData.db == $scope.x_o.name || $scope.myData.level === "admin" && $scope.x_o.name === "KB" || $scope.login.usrname === "k"){
                         if(setAccessRights()) {
@@ -560,50 +729,190 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                             $scope.x_page = " "; // show main menu only
                         }
                     } else {
-                        $scope.error = ">> no access rights <<";  
+                        $scope.error = ">> no access rights <<"; 
+                        userid=""; 
                     }                       
+                } else {
+                    $scope.error = ">> user unknown <<";
+                    userid=""; 
+                }
+            },function (err) {
+                $scope.error = ">> system error <<";
+                userid=""; 
+            }
+        );
+    }
+
+    $scope.log_in = function () {
+        var searchParameters = [];
+        var o = {};
+        o.field = "un";
+        o.compare = "EQUAL";
+        o.value = $scope.login.username;
+        searchParameters.push(o);
+        o = {};
+        o.field = "pwd";
+        o.compare = "EQUAL";
+        o.value = $scope.login.password;
+        searchParameters.push(o);
+        var xSearchSql = {};
+        xSearchSql.params = searchParameters; // array of objects: field, compare, value
+        xSearchSql.sql = "JSON_VALUE(infoJSON,'$.un') = '" + $scope.login.usrname + "' and JSON_VALUE(infoJSON,'$.pwd') = '" + $scope.login.password + "'";
+        $http.post($scope.sloc + "KB_x_getAll?module=KB&table=users&jsonFields=&orderBy=name&masterID=%&rowsPage=1&pageCt=1", JSON.stringify(xSearchSql)).then
+            (function (response) {
+                if (response.data.rv.length > 0) {
+                    userid = response.data.rv[0].ID;
+                    usrname = response.data.rv[0].infoJSON.name;
+                    usraccess = response.data.rv[0].infoJSON.access;
+                    localStorage.setItem("userid", userid);
+                    localStorage.setItem("usrname", usrname);
+                    localStorage.setItem("usraccess", usraccess);
+                    $scope.myData = response.data.rv[0];
+                    if(setAccessRights()) {
+                        var h={};
+                        h.date=new Date();
+                        $http.post($scope.sloc + 'KB_x_addUpdate?module=KB&table=logins&ID=&masterID=' + userid + '&orderBy=date&parentID=&sequence=0&uid=' + userid, JSON.stringify(h)).then
+                        (
+                            function (response) 
+                            {
+                                $scope.error = "";
+                                $scope.x_page = " "; // show main menu only
+                            }, 
+                            function (err)
+                            {
+                                alert("login save error");
+                            }
+                        );
+                    } else {
+                        $scope.error = ">> no access rights <<"; 
+                    }
                 } else {
                     $scope.error = ">> user name / password unknown <<";
                 }
-            },
-            function (err) {
+            },function (err) {
                 $scope.error = ">> e r r o r <<";
-            });
+            }
+        );
     };
 
     setAccessRights = function() {
-        if($scope.myData.level === "user"){
-            $http.post($scope.sloc + "KB_x_getAll?module=KB&table=accessRights&jsonFields=&orderBy=sequence&masterID=userid&rowsPage=900&pageCt=1", JSON.stringify($scope.xSearchSql)).then
-            (function (response) {
-                $scope.xList = response.data.rv;
-                for(var x in $scope.xList){
-                    $scope.x_o.forms[$scope.xList[x].name]._C = xList[x].create;
-                    $scope.x_o.forms[$scope.xList[x].name]._R = xList[x].read;
-                    $scope.x_o.forms[$scope.xList[x].name]._U = xList[x].update;
-                    $scope.x_o.forms[$scope.xList[x].name]._D = xList[x].delete;
-                    setReadRights($scope.x_o.forms[$scope.xList[x].name].parent);
+        var kb = false;
+        var all = false;
+        var level = "";
+        var role = "";
+        var availM = {};
+        var t = usraccess.split(" ");
+        for(var x in t){  // for all dbs defined in access
+            var t1  = t[x].split(":");  // db:level+role
+            if(t1[0] === "KB") {kb = true; all = true;$scope.SelLevel = "KB";} else {
+                if(t1[0] === $scope.x_o.name && (t1[0] === "Administrator" || t1[0] === "Superuser"))
+                {
+                     all=true;
                 }
-            },
-            function (err) {
-                alert("error setAccessRights " + JSON.stringify(err));
-                $scope.xList = [];
-                return false;
-            });
-        } else {
-            for(var x in $scope.x_o.forms) {
+                if(t1[0] === $scope.x_o.name)
+                {
+                    var a = {};
+                    a.name = t1[0];
+                    availM[t[0]]=a; // object key not relevant
+                    level = t2[0];
+                    $scope.SelLevel = level;
+                    role = t2[1];
+                }
+            }
+        }
+        if(kb)
+        {
+            $scope.AvailableModules = $scope.x_o.dbs;
+        }else
+        {
+            $scope.AvailableModules = availM;
+        }
+        $scope.AvailableModules["0"]={"name":"refresh"};
+
+        if(!all)
+        {
+            if(level == ""){return false;} // no access rights for current module
+
+            var searchParameters = [];
+            var o = {};
+            o.field = "modulesID";
+            o.compare = "EQUAL";
+            o.value = $scope.x_o.ID; 
+            searchParameters.push(o);
+            var xSearchSql = {};
+            xSearchSql.params = searchParameters; // array of objects: field, compare, value
+            xSearchSql.sql = "JSON_VALUE(infoJSON,'$.modulesID') = '" + $scope.x_o.ID + "'";
+    
+            $http.post($scope.sloc + "KB_x_getAll?module=KB&table=accessRights&jsonFields=&orderBy=sequence&masterID=%&rowsPage=900&pageCt=1", JSON.stringify(xSearchSql)).then
+            (
+                function (response) 
+                {
+                    var xList = response.data.rv;
+
+                    for(var x in xList)
+                    {
+                        var ok=true;
+                        if(role !== "")
+                        {
+                            if(xList[x].roles === undefined || xList[x].roles === null || xList[x].roles === "")
+                            {
+                                ok=false;
+                            }else
+                            {
+                                if(!xList[x].roles.includes(role))
+                                {
+                                    ok=false;
+                                }
+                            }
+                        }
+                        if(ok)
+                        {
+                            $scope.x_o.forms[$scope.xList[x].formsName]._C = xList[x].create;
+                            $scope.x_o.forms[$scope.xList[x].formsName]._R = xList[x].read;
+                            $scope.x_o.forms[$scope.xList[x].formsName]._U = xList[x].update;
+                            $scope.x_o.forms[$scope.xList[x].formsName]._D = xList[x].delete;
+                            for(var z in $scope.x_o.forms)
+                            {
+                                if($scope.x_o.forms[z].ID === $scope.x_o.forms[$scope.xList[x].formsName].parentID)
+                                {
+                                    if($scope.x_o.forms[z].parentID !== undefined && $scope.x_o.forms[z].parentID !== "")
+                                    {
+                                        setReadRights($scope.x_o.forms[z].name);                        }
+                                    }
+                                }
+                            }
+                        }
+
+                },
+                function (err)
+                {
+                    alert("error setAccessRights " + JSON.stringify(err));
+                    return false;
+                }
+            );
+        } else 
+        {
+            for(var x in $scope.x_o.forms) 
+            {
                 $scope.x_o.forms[x]._C = true;
                 $scope.x_o.forms[x]._R = true;
                 $scope.x_o.forms[x]._U = true;
                 $scope.x_o.forms[x]._D = true;
             } 
         }
-        return true;
+        return true; 
     };
 
-    setReadRights = function(f) {
+    setReadRights = function(f) { // all top level forms
         if(f !== undefined && f !== ""){
             $scope.x_o.forms[f]._R = true;
-            setReadRights($scope.x_o.forms[f].parent);
+            if($scope.x_o.forms[f].parentID !== undefined && $scope.x_o.forms[f].parentID !== "")
+            {
+                for(var z in $scope.x_o.forms){
+                    if($scope.x_o.forms[z].ID === $scope.x_o.forms[f].parentID){
+                        setReadRights($scope.x_o.forms[z].name);                        }
+                }
+            }
         }
     };
 
@@ -617,6 +926,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         $scope.x_pageCt = 1;
         $scope.x_masterID = "";
         $scope.x_n = [];
+        $scope.topName="";
         $scope.myOrderBy = undefined;
         $scope.xSearchListTitle = "";
         $scope.xSearchSql = {};
@@ -639,6 +949,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             $scope.x_page = "TREE";
         }
         $scope.xEditFormDirty = false;
+        $scope.topName="";
         xInitComplete();
     };
 
@@ -671,6 +982,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             "xSearchSql": $scope.xSearchSql,
             "xElement": Object.assign({}, $scope.xElement)
         });
+        $scope.topName="";
         $scope.x_masterID = $scope.xElement.ID;
         $scope.x_form = item;
         if ($scope.x_o.forms[$scope.x_form].rowsPage !== undefined) {
@@ -879,6 +1191,14 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     xInitComplete = function () {
+        if($scope.x_n.length>0){
+            if($scope.x_n[$scope.x_n.length-1].xElement.name == undefined)
+                {if($scope.x_n[$scope.x_n.length-1].xElement.date == undefined){$scope.topName = "details " + $scope.x_form;
+                } else {$scope.topName = $scope.x_n[$scope.x_n.length-1].xElement.date + " " + $scope.x_form;}
+            }else{ $scope.topName = $scope.x_n[$scope.x_n.length-1].xElement.name + " " + $scope.x_form;}
+        } else {
+            $scope.topName = $scope.x_form;
+        }
         var h = $scope.x_masterID;
         if($scope.x_o.forms[$scope.x_form].masterEmpty){h = "";}
         if($scope.x_o.forms[$scope.x_form].ignoreMaster){h = "%";}
@@ -902,6 +1222,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             $scope.xTotal = {};
             // calc totals for x_o.forms[x_forms].fieldsTotal
             if ($scope.x_o.forms[$scope.x_form].fieldsTotal !== undefined && $scope.x_o.forms[$scope.x_form].fieldsTotal !== "") {
+
                 var ttot = $scope.x_o.forms[$scope.x_form].fieldsTotal.split(",");
                 if (ttot !== undefined && ttot !== "") {
                     for (var t in ttot) {
@@ -945,6 +1266,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     $scope.xView = function (item) {
+        debugger;
         if($scope.x_o.forms[$scope.x_form]._U){
             $scope.x_page = "EDIT";
         } else {
@@ -1078,10 +1400,21 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             $scope.error = "";
             $scope.login = {
                 "usrname": "",
-                "password": ""
+                "password": "",
+                "access": ""
             };
             userid = "";
             $scope.x_n = [];
+            $scope.topName="";
+            if($scope.x_n.length>0){
+                if($scope.x_n[$scope.x_n.length-1].xElement.name == undefined){
+                    $scope.topName = "details " + $scope.x_form;
+                }else{
+                    $scope.topName = $scope.x_n[$scope.x_n.length-1].xElement.name + " " + $scope.x_form;
+                }
+            } else {
+                $scope.topName = $scope.x_form;
+            }
             $scope.xEditFormDirty = false;
         } else {
             $scope.xInit();
@@ -1170,6 +1503,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         var vto = vp[1];
         var vfromValue = $scope.xTotal[vfrom];
         var temp = $scope.x_n.pop(); // navUp to EDIT
+        $scope.topName="";
         retrievePrevious(temp, vto, vfromValue);
         $scope.xEditFormDirty = true; // for manual save
         xInitComplete();
@@ -1326,51 +1660,58 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 // special buttons --------------------------------------------------------------------------------------------
 
     $scope.cTables = function (db, moduleID) {
-        var xD = [];  // KB_diagrams for moduleID
-        $http.post($scope.sloc + 'KB_x_getAll?module=KB&table=diagrams&orderBy=sequence&masterID=' + moduleID + '&rowsPage=100&pageCt=1', "").then
+        var xD = {};  // KB_diagrams for moduleID
+        var xT = [];  // KB_tables for moduleID
+        SearchSql = {};
+        SearchSql.params = []; 
+        SearchSql.sql = "";
+        $http.post($scope.sloc + 'KB_x_getAll?module=KB&table=diagrams&orderBy=sequence&masterID=' + moduleID + '&rowsPage=300&pageCt=1', JSON.stringify(SearchSql)).then
         (function (response) {
-            $scope.xD = response.data.rv;
+            xD = response.data.rv;
+            for (var x in $scope.x_o.tables){
+                if($scope.x_o.tables[x].modulesID = moduleID) {
+                    xT.push($scope.x_o.tables[x]);
+                }                   
+            }
+            var tt = [];  // tables not yet registered
+            for(var x in xD){
+                var t = xD[x].infoJSON.table;
+                if(t == undefined){
+                    alert("no table defined for: "+xD[x].name);
+                }else{
+                    var h = xT.filter(function (e) { return e.name == t; });
+                    if(h.length == 0){ // table not yet created
+                        var h = tt.filter(function (e) { return e == t; });
+                        if(h.length == 0){   // first occurence in tt
+                            tt.push(t);
+                        }
+                    }
+                }
+            }
+            tt.sort();
+            if (tt.length > 0 && confirm(tt + ": CREATE NEW DB TABLES")) {
+                for(x in tt){
+                    // create table
+                    $http.post($scope.sloc + 'KB_table?module=' + db + "&table=" + tt[x], "").then
+                    (function (response) {
+                        // update tables
+                        var r = {};
+                        r.name = tt[x].name;
+                        $htp.post($scope.sloc + 'KB_x_addUpdate?module=KB&table=tables&ID=&masterID=' + moduleID + '&parentID=&orderBy=sequence&sequence=1&uid=' + userid, JSON.stringify(r)).then
+                        (function (response) {
+                        }, function (err) {
+                            alert("table not saved: " + db + "_" + tt[x]);
+                        });
+                    }, function (err) {
+                        alert("db table not created: "+tt[x]);
+                    });        
+                }
+            } else {
+                alert("no tables to be created");
+            }
         }, function (err) {
             alert("error read diagrams");
         });
-        var xT = [];  // KB_tables for moduleID
-        $http.post($scope.sloc + 'KB_x_getAll?module=KB&table=tables&orderBy=sequence&masterID=' + moduleID + '&rowsPage=100&pageCt=1', "").then
-        (function (response) {
-            $scope.xT = response.data.rv;
-        }, function (err) {
-            alert("error read tables");
-        });
-        var tt = [];  // tables not yet registered
-        var s = "";
-        for(var x in xD){
-            var t = xD[x].infoJSON.table;
-            var f = false;
-            for(var y in xT){
-                if(xT[y].infoJSON.name === t){f = true;}
-            }
-            if(!f){
-                tt.push(t);
-                s+=t + "\\";
-            }
-        }
-        if (confirm(s + "create db tables")) {
-            for(x in tt){
-                //     create table
-                $http.post($scope.sloc + 'KB_table?module=' + db + "&table=" + tt[x], "").then
-                (function (response) {
-                }, function (err) {
-                    alert("db table not created: "+tt[x]);
-                });        
-                //     update tables
-                var r = {};
-                r.name = tt[x].name;
-                $htp.post($scope.sloc + 'KB_x_addUpdate?module=KB&table=tables&ID=&masterID=' + moduleID + '&parentID=&orderBy=sequence&sequence=1&uid=' + userid, JSON.stringify(r)).then
-                (function (response) {
-                }, function (err) {
-                    alert("table not saved: " + db + "_" + tt[x]);
-                });
-            }
-        }
     };
 
     $scope.dbtc = function (pfield, moduleID, table) {
@@ -1480,7 +1821,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         });
     };
  
-    buildApp = function (moduleID, id,parent, xD,xT) {
+    buildApp = function (moduleID, id, parentid, xD,xT) {
         var t;
         if(id === ""){
             t = xD.filter(function (e) { return e.parentID == ""; });
@@ -1490,11 +1831,12 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         for (var x in t) {
             var o = {};
             o.name = t[x].name;
-            o.parent = parent;
+            o.description = t[x].description;
+            o.parentID = parentid;
             o.orderBy = t[x].orderBy;
-            v_table=xt.filter(function (e) { return e.parentID == moduleID && e.name == t[x].table; });
+            v_table=xT.filter(function (e) { return e.parentID == moduleID && e.name == t[x].table; });
             if(v_table.length == 0){alert("table not found " + t[x].table);}
-            o.tablesID = v_h[0].ID;
+            o.tablesID = v_table[0].ID;
             o.tablesName = t[x].table;
             o.rowsPage = 20;
             if(t[x].detachSubLevel !== undefined){o.detachSubLevel = t[x].detachSubLevel;}else{o.detachSubLevel = false;}
@@ -1514,7 +1856,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                 buildPage(fID,"LIST",xT,v_table);
                 buildPage(fID,"EDIT",xT,v_table);
                 buildPage(fID,"VIEW",xT,v_table);
-                buildApp(moduleID, t[x].ID, t[x].name, xD, xT);            
+                buildApp(moduleID, t[x].ID, fID, xD, xT);            
             }, function (err) {
                 alert("form not created" + t[x].name);
             });
@@ -1706,5 +2048,4 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             alert("doc error");
         });
     };
-
 });
