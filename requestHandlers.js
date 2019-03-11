@@ -4,44 +4,44 @@ var uuid = require('uuid/v1');
 var buildFE = require("./buildFE");
 
 
-function KB_x_getAll(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_x_getAll' was called.");
-    dbh.start("KB_x_getAll", response, postData, querystring);
+function KB_x_getAll(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_x_getAll' was called");
+    dbh.start("KB_x_getAll", response, postData, querystring, io);
 }
-function KB_x_addUpdate(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_x_addUpdate' was called.");
-    dbh.start("KB_x_addUpdate", response, postData, querystring);
+function KB_x_addUpdate(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_x_addUpdate' was called");
+    dbh.start("KB_x_addUpdate", response, postData, querystring, io);
 }
-function KB_x_delete(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_x_delete' was called.");
-    dbh.start("KB_x_delete", response, postData, querystring);
+function KB_x_delete(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_x_delete' was called");
+    dbh.start("KB_x_delete", response, postData, querystring, io);
 }
-function KB_x_sequencePut(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_x_sequencePut' was called.");
-    dbh.start("KB_x_sequencePut", response, postData, querystring);
+function KB_x_sequencePut(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_x_sequencePut' was called");
+    dbh.start("KB_x_sequencePut", response, postData, querystring, io);
 }
-function KB_getAuto(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_getAuto' was called.");
-    dbh.start("KB_getAuto", response, postData, querystring);
+function KB_getAuto(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_getAuto' was called");
+    dbh.start("KB_getAuto", response, postData, querystring, io);
 }
-function KB_table(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_table' was called.");
-    dbh.start("KB_table", response, postData, querystring);
+function KB_table(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_table' was called");
+    dbh.start("KB_table", response, postData, querystring, io);
 }
-function KB_query(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_query' was called.");
-    dbh.start("KB_query", response, postData, querystring);
+function KB_query(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_query' was called");
+    dbh.start("KB_query", response, postData, querystring, io);
 }
-function KB_bDB(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_bDB' was called.");
-    dbh.start("KB_bDB", response, postData, querystring);
+function KB_bDB(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_bDB' was called");
+    dbh.start("KB_bDB", response, postData, querystring, io);
 }
-function KB_cModule(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_cModule' was called.");
-    dbh.start("KB_cModule", response, postData, querystring);
+function KB_cModule(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_cModule' was called");
+    dbh.start("KB_cModule", response, postData, querystring, io);
 }
-function KB_doc(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_doc' was called.");
+function KB_doc(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_doc' was called");
     var d_m = JSON.parse(postData);
     fs.readFile(__dirname + "/doc/doc" + d_m.form + ".txt", 'utf8', function(err,data) {
         if(err) {
@@ -88,31 +88,31 @@ function KB_doc(response, postData, pathname, querystring, request, dbh) {
                     v = v.replace("<!--grandchildren-->", vgrandchildren);
                     d_m.htmlDoc=v;
                     fs.writeFile(__dirname + "/doc/doc" + d_m.form + ".txt", v, "utf8", function(err, data) {
-                        dbh.start("KB_doc", response, JSON.stringify(d_m), querystring);
+                        dbh.start("KB_doc", response, JSON.stringify(d_m), querystring, io);
                     });
                 }
             });
 
         } else {
             d_m.htmlDoc=data;
-            dbh.start("KB_doc", response, JSON.stringify(d_m), querystring);
+            dbh.start("KB_doc", response, JSON.stringify(d_m), querystring, io);
         }
     });
 }
-function KB_chart(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_chart' was called.");
+function KB_chart(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_chart' was called");
     fs.readFile(__dirname + "/doc/chart.html", 'utf8', function(err,data) {
         if(err){
             response.writeHead(300, { "Content-Type": "text/plain" });
             response.write("chart.html error");
             response.end();
         } else {
-            dbh.start("KB_chart", response, data, querystring);
+            dbh.start("KB_chart", response, data, querystring, io);
         }
     });
 }
-function KB_carousel(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_carousel' was called.");
+function KB_carousel(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_carousel' was called");
     fs.readFile(__dirname + "/doc/carousel.html", 'utf8', function(err,data) {
         if(err){
             response.writeHead(300, { "Content-Type": "text/plain" });
@@ -126,8 +126,8 @@ function KB_carousel(response, postData, pathname, querystring, request, dbh) {
         }
     });
 }
-function upload(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'upload' was called.");
+function upload(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'upload' was called");
     var form = new formidable.IncomingForm();
     form.parse(request, function (error, fields, files) {
         var vfn1 = "F_" + uuid.v1() + files.UploadedImage.name;
@@ -141,19 +141,41 @@ function upload(response, postData, pathname, querystring, request, dbh) {
         response.writeHead(200, { "Content-Type": "text/plain" });
         response.write(vfn1);
         response.end();
-        console.log("The file was saved!");
+        io.emit("system","The file was saved");
     });
 }
-function load(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'load' was called.");
-    buildFE.start(response, postData, pathname, querystring, request, dbh);
+function load(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'load' was called");
+    buildFE.start(response, postData, pathname, querystring, request, dbh, io);
 }
-function KB_showFile(response, postData, pathname, querystring, request, dbh) {
-    console.log("Request handler 'KB_showFile' was called.");
+function KB_getStats(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_getStats' was called");
+    dbh.start("KB_getStats", response, postData, querystring, io);
+}
+function KB_sendMessage(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_sendMessage' was called");
+    response.writeHead(200, { "Content-Type": "text/plain" });
+    response.write("OK");
+    response.end();
+    io.emit("user",postData);
+}
+function KB_showFile(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_showFile' was called");
     if(pathname == undefined || pathname == "") {
-        response.writeHead(300, { "Content-Type": "text/html" });
-        response.write("missing path");
-        response.end();
+        var floc = __dirname + "index.html";
+        fs.readFile(floc + pathname, 'utf8',
+            function (err, data) {
+                if (err) {
+                    response.writeHead(300, { "Content-Type": "text/plain" });
+                    response.write("index not loaded");
+                    response.end();
+                } else {
+                    response.writeHead(200, { "Content-Type": "text/html" });
+                    response.write(data);
+                    response.end();
+                }
+            }
+        );
     } else {
         var floc = __dirname + "/doc/";
         fs.readFile(floc + pathname, 'utf8',
@@ -186,3 +208,5 @@ exports.KB_query = KB_query;
 exports.KB_bDB = KB_bDB;
 exports.KB_cModule = KB_cModule;
 exports.KB_showFile = KB_showFile;
+exports.KB_getStats = KB_getStats;
+exports.KB_sendMessage = KB_sendMessage;

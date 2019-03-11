@@ -46,7 +46,7 @@ var cvt2 = function (result) {
     return o;
 };
 
-function start(storedProcedure, response, postData, querystring, callback) {
+function start(storedProcedure, response, postData, querystring, io, callback) {
     var config = sss.start().sql;
     var rv = "OK";
     var vrows = "";
@@ -76,7 +76,22 @@ function start(storedProcedure, response, postData, querystring, callback) {
                 }
             );
             switch (storedProcedure) {
+                case "KB_getStats":
+                    vrows = "";
+                    var request19 = new Request("SELECT TOP 10 SUBSTRING(date,1,10) nYear, count(*) Tnet FROM KB_logins GROUP BY SUBSTRING(date,1,10) ORDER By SUBSTRING(date,1,10) DESC FOR JSON PATH;SELECT TOP 10 b.name Service, count(*) Tnet FROM KB_logins a INNER JOIN KB_users b ON a.masterID = b.ID GROUP BY b.name ORDER By count(*) DESC  FOR JSON PATH;", function () {});
+                    request19.on('row', function (rows) {
+                        vrows += rows[0].value;
+                    });
+                    request19.on('requestCompleted', function () {
+                        response.writeHead(200, {"Content-Type": "text/plain"});
+                        response.write(vrows.replace("}][{","}],[{"));
+                        response.end();
+                        connection.close();
+                    });
+                    connection.execSql(request19);
+                    return;
                 case "KB_buildModel":
+                    vrows = "";
                     var request0 = new Request("SELECT * FROM KB_modules FOR JSON PATH; SELECT * FROM KB_forms ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_pages ORDER BY sequence FOR JSON PATH;	SELECT * FROM KB_fields ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_tables FOR JSON PATH; SELECT * FROM KB_columns FOR JSON PATH;", function (err, rowCount, rows) {
                         if (err) {
                             response.writeHead(300, {"Content-Type": "text/plain"});
@@ -106,7 +121,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         var vfields = tt[3];
                         var vtables = tt[4];
                         var vcolumns = tt[5];
-                        buildModel.start(vmodules, vforms, vpages, vfields, vtables, vcolumns, querystring, callback);
+                        buildModel.start(vmodules, vforms, vpages, vfields, vtables, vcolumns, querystring, io, callback);
                         connection.close();
                     });
                     connection.execSql(request0);
@@ -242,12 +257,9 @@ function start(storedProcedure, response, postData, querystring, callback) {
                         t = t.replace("}][{", "}],[{");
                         t = "[" + t.replace("}][{", "}],[{") + "]";
                         var tt = JSON.parse(t);
-                        //console.log(JSON.stringify(tt));
-
                         postData = postData.replace("//data//", JSON.stringify(tt[0]));
                         postData = postData.replace("//data1//", JSON.stringify(tt[1]));
                         postData = postData.replace("//data2//", JSON.stringify(tt[2]));
-
                         response.writeHead(200, {
                             "Content-Type": "text/plain"
                         });
@@ -332,6 +344,7 @@ function start(storedProcedure, response, postData, querystring, callback) {
                     return;
 
                 case "KB_n_getAll":
+                    vrows = "";
                     var vtable = querystring.module + "_" + querystring.table;
                     var vob = "";
                     var x = querystring.orderBy.split(",");

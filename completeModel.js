@@ -32,8 +32,14 @@ function start(x_o) {
         var vFieldsMap = "";
         var vFieldsImage = "";
         var vFieldsLookup = ""; // field names,
-        if (x_o.forms[f].parent !== undefined) {
-            x_o.forms[x_o.forms[f].parent].subForms.push(x_o.forms[f].name);
+        if (x_o.forms[f].parentID !== "") {
+            var h="";
+            for(var x in x_o.forms){
+                if(x_o.forms[x].ID == x_o.forms[f].parentID){
+                    h=x_o.forms[x].name;
+                }
+            }
+            if(h!==""){x_o.forms[h].subForms.push(x_o.forms[f].name);}
         } // update subForms of parent
         if (x_o.forms[f].tablesID !== undefined) {
             for (x in x_o.tables[x_o.forms[f].tablesID].columns) {
@@ -396,6 +402,7 @@ function start(x_o) {
                             if (c.hideIf !== undefined) {
                                 vhide = " ng-hide=\"" + c.hideIf.replace(/_/gi, "xElement.infoJSON.").replace(/::/gi, "'") + "\" "; // replace _ by xElement.infoJSON and :: by '
                             }
+                            if(x_o.forms[f].pages[p].fields[fi].readOnly){ vhide += " readonly "} // for editable forms with locked fields
                             switch (c.fieldType) { // label
                                 case "tel":
                                     vhtmlEdit += "<label for='" + x_o.forms[f].name + c.name + "'" + vhide + "><a href='tel:{{xElement.infoJSON." + c.name + "}}' target='_blank'><span ng-if='xElement.infoJSON." + c.name + "' class='glyphicon glyphicon-earphone'></span></a></label >";
@@ -485,7 +492,7 @@ function start(x_o) {
                                     vhtmlEdit += "<a href='{{sloc}}{{xElement.infoJSON." + c.name + "}}.html' target='_blank'> {{xElement.infoJSON." + c.name + "}}</a> <input type='button' ng-hide='xElement.infoJSON." + c.name + " || xElement.ID === \"\"' class='form-control' ng-click='doc(\"" + c.name + "\")' value='create doc and save' >";
                                     break;
                                 case "dbtc":
-                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.ID === \"\"' class='form-control' ng-click='dbtc(\"" + c.name + "\",xElement.masterID,xElement.ID,xElement.infoJSON.name)' value='create db table' >";
+                                    vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.ID === \"\"' class='form-control' ng-click='dbtc(\"" + c.name + "\",xElement.masterID,xElement.name)' value='create db table' >";
                                     break;
                                 case "dbqc":
                                     vhtmlEdit += " {{xElement.infoJSON." + c.name + "}} <input type='button' ng-hide='xElement.ID === \"\"' class='form-control' ng-click='dbqc(\"" + c.name + "\",xElement.masterID,xElement.ID,xElement.infoJSON.name)' value='create query for db table' >";

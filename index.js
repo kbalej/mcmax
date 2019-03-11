@@ -22,5 +22,8 @@ handle["/KB_table"] = requestHandlers.KB_table;
 handle["/KB_query"] = requestHandlers.KB_query;
 handle["/KB_bDB"] = requestHandlers.KB_bDB;
 handle["/KB_cModule"] = requestHandlers.KB_cModule;
+handle["/KB_getStats"] = requestHandlers.KB_getStats;
+handle["/KB_sendMessage"] = requestHandlers.KB_sendMessage;
 handle["KB_showFile"] = requestHandlers.KB_showFile;
+
 server.start(router.route, handle,dbh);
