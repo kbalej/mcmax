@@ -452,7 +452,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
 
     // after modification of lookup field
     $scope.completeLookupField = function (buffer, item, lookupFields) {
-        // complete buffer (xElement or xSearch): <item>Name + masterID + masterName + lookupFields
+        // complete buffer (xElement, ieElement or xSearch): <item>Name + masterID + masterName + lookupFields
         var ij = ".infoJSON.";
         if(buffer == "xSearch") {ij = ".";}
         var t_p = eval("$scope." + buffer + ij + item + "ID");
@@ -490,44 +490,62 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     // when starting add / view. for table lookup 
 
     initLookups = function () {
-        for(var x in $scope.x_o.lookups){
-            if($scope.x_o.lookups[x].masterLookup === $scope.x_o.forms[$scope.x_form].tablesName){
-                $scope.x_o.lookups[x].masterID = $scope.xElement.ID;
-                $scope.x_o.lookups[x].load();
-            }
-        }
         var lu;
         var y = "" + $scope.x_o.forms[$scope.x_form].fieldsLookup;
         var x = y.split(",");
-        if (x[0] !== undefined && x[0] !== "") {
-            for (var v in x) {
-                var vlookup = x[v].substring(0, x[v].length - 2);
-                if ($scope.xElement.infoJSON[x[v]] !== undefined) {
-                    if ($scope.x_o.lookups[vlookup] !== undefined) {
-                        if ($scope.x_o.lookups[vlookup].masterLookup !== undefined && $scope.x_o.lookups[vlookup].masterLookup !== null) { // sublevel
-                            if ($scope.x_o.lookups[vlookup].masterID !== $scope.xElement.infoJSON[vlookup + 'masterID']) {
-                                $scope.xElement.infoJSON[vlookup + 'ID'] = null;
-                                $scope.xElement.infoJSON[vlookup + 'Name'] = null;
-                                $scope.xElement.infoJSON[vlookup + 'masterID'] = null;
-                                $scope.xElement.infoJSON[vlookup + 'masterName'] = null;
-                            }
-                            for (lu in $scope.x_o.lookups) {
-                                if ($scope.x_o.lookups[lu].masterLookup === vlookup) {
-                                    if ($scope.x_o.lookups[lu].masterID !== $scope.xElement.infoJSON[$scope.x_o.lookups[lu].name + 'masterID']) {
-                                        $scope.x_o.lookups[lu].masterID = removeString($scope.xElement.infoJSON[$scope.x_o.lookups[lu].name + 'masterID']);
-                                        $scope.x_o.lookups[lu].masterName = $scope.xElement.infoJSON[$scope.x_o.lookups[lu].name + 'masterName'];
-                                        $scope.x_o.lookups[lu].load();
-                                    }
+        if (x[0] == undefined || x[0] == "") { return;}
+
+        if($scope.x_o.forms[$scope.x_form].tablesName == 'forms'){debugger;}
+
+        // set current form id for lookup of <form>
+        if($scope.x_o.lookups[lu].masterLookup == $scope.x_o.forms[$scope.x_form].tablesName ){
+            $scope.x_o.lookups[lu].masterID = $scope.xElement.ID;
+            $scope.x_o.lookups[lu].load();
+        }
+
+        // set current lookup fields id for lookup of <lookup field>
+        for(lu in $scope.x_o.lookups){
+            for(var z in x){
+                if($scope.xElement.infoJSON[x[z]] !== undefined)
+                {
+                    if($scope.x_o.lookups[lu].masterLookup == x[z].substring(0, x[z].length - 2))
+                    {
+                        $scope.x_o.lookups[lu].masterID = $scope.xElement.infoJSON[x[z]];
+                        $scope.x_o.lookups[lu].load();
+                    }
+                }
+            }
+        }
+
+        // delete ???
+
+        for (var v in x) {
+            var vlookup = x[v].substring(0, x[v].length - 2);
+            if ($scope.xElement.infoJSON[x[v]] !== undefined) {
+                if ($scope.x_o.lookups[vlookup] !== undefined) {
+                    if ($scope.x_o.lookups[vlookup].masterLookup !== undefined && $scope.x_o.lookups[vlookup].masterLookup !== null) { // sublevel
+                        if ($scope.x_o.lookups[vlookup].masterID !== $scope.xElement.infoJSON[vlookup + 'masterID']) {
+                            $scope.xElement.infoJSON[vlookup + 'ID'] = null;
+                            $scope.xElement.infoJSON[vlookup + 'Name'] = null;
+                            $scope.xElement.infoJSON[vlookup + 'masterID'] = null;
+                            $scope.xElement.infoJSON[vlookup + 'masterName'] = null;
+                        }
+                        for (lu in $scope.x_o.lookups) {
+                            if ($scope.x_o.lookups[lu].masterLookup === vlookup) {
+                                if ($scope.x_o.lookups[lu].masterID !== $scope.xElement.infoJSON[$scope.x_o.lookups[lu].name + 'masterID']) {
+                                    $scope.x_o.lookups[lu].masterID = removeString($scope.xElement.infoJSON[$scope.x_o.lookups[lu].name + 'masterID']);
+                                    $scope.x_o.lookups[lu].masterName = $scope.xElement.infoJSON[$scope.x_o.lookups[lu].name + 'masterName'];
+                                    $scope.x_o.lookups[lu].load();
                                 }
                             }
-                        } else {
-                            for (lu in $scope.x_o.lookups) {
-                                if ($scope.x_o.lookups[lu].masterLookup === vlookup) {
-                                    if ($scope.x_o.lookups[lu].masterID !== $scope.xElement.infoJSON[x[v]]) {
-                                        $scope.x_o.lookups[lu].masterID = removeString("" + $scope.xElement.infoJSON[x[v]]);
-                                        $scope.x_o.lookups[lu].masterName = $scope.xElement.infoJSON[x[v].substring(0, x[v].length - 2) + "Name"];
-                                        $scope.x_o.lookups[lu].load();
-                                    }
+                        }
+                    } else {
+                        for (lu in $scope.x_o.lookups) {
+                            if ($scope.x_o.lookups[lu].masterLookup === vlookup) {
+                                if ($scope.x_o.lookups[lu].masterID !== $scope.xElement.infoJSON[x[v]]) {
+                                    $scope.x_o.lookups[lu].masterID = removeString("" + $scope.xElement.infoJSON[x[v]]);
+                                    $scope.x_o.lookups[lu].masterName = $scope.xElement.infoJSON[x[v].substring(0, x[v].length - 2) + "Name"];
+                                    $scope.x_o.lookups[lu].load();
                                 }
                             }
                         }
@@ -536,6 +554,41 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             }
         }
     };
+
+    $scope.ieElement = {};
+    $scope.ieeditingInProgress = false;
+
+
+    $scope.ieeditSwitch = function (todo) { 
+        $scope.xElement.edit = !$scope.xElement.edit; 
+        if ($scope.xElement.edit) { 
+            $scope.ieElement = $scope.xElement; 
+            $scope.ieeditingInProgress = true; 
+        } else { 
+            $scope.ieeditingInProgress = false; 
+        } 
+    }; 
+
+    $scope.iedelete = function (id) { 
+        if (confirm("confirm deletion") == true) { 
+            $http.delete($scope.apiEndpoint + '/api/Laundry/' + id).then 
+                (function (response) { 
+                    $scope.initLaundry(); 
+                }, function (err) { 
+                    alert(JSON.parse(err)); 
+                }); 
+        } 
+    }; 
+
+    $scope.ieupdate = function (todo) { 
+        $http.post($scope.apiEndpoint + '/api/Laundry', JSON.stringify($scope.editInProgressLaundry)).then 
+          (function (response) { 
+              $scope.initLaundry(); 
+              $scope.editSwitchLaundry(todo); 
+          }, function (err) { 
+              alert(JSON.parse(err)); 
+          }) 
+    }; 
 
     setDefaults = function () { // for empty xElement fields
         for (var p in $scope.x_o.forms[$scope.x_form].pages) {
@@ -700,7 +753,6 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     // *** login page
 
 
-    $scope.x_page = "LOGIN";
     $scope.error = "";
     $scope.login = {
         "usrname": "",
@@ -720,27 +772,36 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         $scope.login.usrname = usrname;
         $http.post($scope.sloc + "KB_x_getAll?module=KB&table=users&jsonFields=&orderBy=name&masterID=%&rowsPage=1&pageCt=1", JSON.stringify($scope.xSearchSql)).then
             (function (response) {
-                debugger;
                 if (response.data.rv.length > 0) {
                     $scope.myData = response.data.rv[0];
-                    if($scope.myData.db == $scope.x_o.name || $scope.myData.level === "admin" && $scope.x_o.name === "KB" || $scope.login.usrname === "k"){
-                        if(setAccessRights()) {
-                            $scope.error = "";
-                            $scope.x_page = " "; // show main menu only
-                        }
-                    } else {
-                        $scope.error = ">> no access rights <<"; 
-                        userid=""; 
-                    }                       
+                    userid = response.data.rv[0].ID;
+                    usrname = response.data.rv[0].infoJSON.name;
+                    usraccess = response.data.rv[0].infoJSON.access;
+                    if(setAccessRights()) {
+                        $scope.error = "";
+                        $scope.x_page = " "; // show main menu only
+                    }
                 } else {
                     $scope.error = ">> user unknown <<";
-                    userid=""; 
+                    userid="";
+                    $scope.login = {
+                        "usrname": "",
+                        "password": ""
+                    };
+                    $scope.x_page = "LOGIN"; 
                 }
             },function (err) {
                 $scope.error = ">> system error <<";
                 userid=""; 
+                $scope.login = {
+                    "usrname": "",
+                    "password": ""
+                };
+                $scope.x_page = "LOGIN";
             }
         );
+    }else{
+        $scope.x_page = "LOGIN";
     }
 
     $scope.log_in = function () {
@@ -815,8 +876,9 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
                     a.name = t1[0];
                     availM[t[0]]=a; // object key not relevant
                     level = t2[0];
-                    $scope.SelLevel = level;
                     role = t2[1];
+                    $scope.SelLevel = level;
+                    $scope.SelRole = role;
                 }
             }
         }
@@ -833,63 +895,185 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         {
             if(level == ""){return false;} // no access rights for current module
 
-            var searchParameters = [];
-            var o = {};
-            o.field = "modulesID";
-            o.compare = "EQUAL";
-            o.value = $scope.x_o.ID; 
-            searchParameters.push(o);
-            var xSearchSql = {};
-            xSearchSql.params = searchParameters; // array of objects: field, compare, value
-            xSearchSql.sql = "JSON_VALUE(infoJSON,'$.modulesID') = '" + $scope.x_o.ID + "'";
-    
-            $http.post($scope.sloc + "KB_x_getAll?module=KB&table=accessRights&jsonFields=&orderBy=sequence&masterID=%&rowsPage=900&pageCt=1", JSON.stringify(xSearchSql)).then
-            (
-                function (response) 
+            if(level == "Guest")
+            {
+                for(var x in $scope.x_o.forms) 
                 {
-                    var xList = response.data.rv;
-
-                    for(var x in xList)
+                    $scope.x_o.forms[x]._C = false;
+                    $scope.x_o.forms[x]._R = true;
+                    $scope.x_o.forms[x]._U = false;
+                    $scope.x_o.forms[x]._D = false;
+                } 
+            }else
+            {
+            
+                for(var x in $scope.x_o.forms) 
+                {
+                    $scope.x_o.forms[x]._C = false;
+                    $scope.x_o.forms[x]._R = false;
+                    $scope.x_o.forms[x]._U = false;
+                    $scope.x_o.forms[x]._D = false;
+                } 
+                
+                var searchParameters = [];
+                var o = {};
+                o.field = "modulesID";
+                o.compare = "EQUAL";
+                o.value = $scope.x_o.ID; 
+                searchParameters.push(o);
+                var xSearchSql = {};
+                xSearchSql.params = searchParameters; // array of objects: field, compare, value
+                xSearchSql.sql = "JSON_VALUE(infoJSON,'$.modulesID') = '" + $scope.x_o.ID + "'";
+        
+                $http.post($scope.sloc + "KB_x_getAll?module=KB&table=accessRights&jsonFields=&orderBy=sequence&masterID=%&rowsPage=900&pageCt=1", JSON.stringify(xSearchSql)).then
+                (
+                    function (response) 
                     {
-                        var ok=true;
-                        if(role !== "")
+                        var xList = response.data.rv;
+
+                        for(var x in xList)
                         {
-                            if(xList[x].roles === undefined || xList[x].roles === null || xList[x].roles === "")
+                            var ok=true;
+                            if(role !== "")
                             {
-                                ok=false;
-                            }else
-                            {
-                                if(!xList[x].roles.includes(role))
+                                if(xList[x].roles === undefined || xList[x].roles === null || xList[x].roles === "")
                                 {
                                     ok=false;
-                                }
-                            }
-                        }
-                        if(ok)
-                        {
-                            $scope.x_o.forms[$scope.xList[x].formsName]._C = xList[x].create;
-                            $scope.x_o.forms[$scope.xList[x].formsName]._R = xList[x].read;
-                            $scope.x_o.forms[$scope.xList[x].formsName]._U = xList[x].update;
-                            $scope.x_o.forms[$scope.xList[x].formsName]._D = xList[x].delete;
-                            for(var z in $scope.x_o.forms)
-                            {
-                                if($scope.x_o.forms[z].ID === $scope.x_o.forms[$scope.xList[x].formsName].parentID)
+                                }else
                                 {
-                                    if($scope.x_o.forms[z].parentID !== undefined && $scope.x_o.forms[z].parentID !== "")
+                                    if(!xList[x].roles.includes(role))
                                     {
-                                        setReadRights($scope.x_o.forms[z].name);                        }
+                                        ok=false;
                                     }
                                 }
                             }
-                        }
+                            if(ok)
+                            {
+                                $scope.x_o.forms[$scope.xList[x].formsName]._C = xList[x].create;
+                                $scope.x_o.forms[$scope.xList[x].formsName]._R = xList[x].read;
+                                $scope.x_o.forms[$scope.xList[x].formsName]._U = xList[x].update;
+                                $scope.x_o.forms[$scope.xList[x].formsName]._D = xList[x].delete;
+                                for(var z in $scope.x_o.forms)
+                                {
+                                    if($scope.x_o.forms[z].ID === $scope.x_o.forms[$scope.xList[x].formsName].parentID)
+                                    {
+                                        if($scope.x_o.forms[z].parentID !== undefined && $scope.x_o.forms[z].parentID !== "")
+                                        {
+                                            setReadRights($scope.x_o.forms[z].name);                        }
+                                        }
+                                    }
+                                }
+                            }
 
-                },
-                function (err)
+                    },
+                    function (err)
+                    {
+                        alert("error setAccessRights " + JSON.stringify(err));
+                        return false;
+                    }
+                );
+            }
+        } else 
+        {
+            for(var x in $scope.x_o.forms) 
+            {
+                $scope.x_o.forms[x]._C = true;
+                $scope.x_o.forms[x]._R = true;
+                $scope.x_o.forms[x]._U = true;
+                $scope.x_o.forms[x]._D = true;
+            } 
+        }
+        return true; 
+    };
+
+    $scope.modifyAccessRights = function() {
+        if($scope.SelLevel == 'KB' || $scope.SelLevel == 'Administrator' || $scope.SelLevel == 'Superuser')
+        {
+            $scope.SelRole = "";
+        }
+
+        if($scope.SelLevel !== 'KB' && $scope.SelLevel !== 'Administrator' && $scope.SelLevelel !== 'Superuser')
+        {
+            if($scope.SelLevell == ""){return false;} // no access rights for current module
+
+            if($scope.SelLevel == "Guest")
+            {
+                for(var x in $scope.x_o.forms) 
                 {
-                    alert("error setAccessRights " + JSON.stringify(err));
-                    return false;
-                }
-            );
+                    $scope.x_o.forms[x]._C = false;
+                    $scope.x_o.forms[x]._R = true;
+                    $scope.x_o.forms[x]._U = false;
+                    $scope.x_o.forms[x]._D = false;
+                } 
+            }else
+            {
+            
+                for(var x in $scope.x_o.forms) 
+                {
+                    $scope.x_o.forms[x]._C = false;
+                    $scope.x_o.forms[x]._R = false;
+                    $scope.x_o.forms[x]._U = false;
+                    $scope.x_o.forms[x]._D = false;
+                } 
+                
+                var searchParameters = [];
+                var o = {};
+                o.field = "modulesID";
+                o.compare = "EQUAL";
+                o.value = $scope.x_o.ID; 
+                searchParameters.push(o);
+                var xSearchSql = {};
+                xSearchSql.params = searchParameters; // array of objects: field, compare, value
+                xSearchSql.sql = "JSON_VALUE(infoJSON,'$.modulesID') = '" + $scope.x_o.ID + "'";
+        
+                $http.post($scope.sloc + "KB_x_getAll?module=KB&table=accessRights&jsonFields=&orderBy=sequence&masterID=%&rowsPage=900&pageCt=1", JSON.stringify(xSearchSql)).then
+                (
+                    function (response) 
+                    {
+                        var xList = response.data.rv;
+
+                        for(var x in xList)
+                        {
+                            var ok=true;
+                            if($scope.SelRole!== "")
+                            {
+                                if(xList[x].roles === undefined || xList[x].roles === null || xList[x].roles === "")
+                                {
+                                    ok=false;
+                                }else
+                                {
+                                    if(!xList[x].roles.includes($scope.SelRole))
+                                    {
+                                        ok=false;
+                                    }
+                                }
+                            }
+                            if(ok)
+                            {
+                                $scope.x_o.forms[$scope.xList[x].formsName]._C = xList[x].create;
+                                $scope.x_o.forms[$scope.xList[x].formsName]._R = xList[x].read;
+                                $scope.x_o.forms[$scope.xList[x].formsName]._U = xList[x].update;
+                                $scope.x_o.forms[$scope.xList[x].formsName]._D = xList[x].delete;
+                                for(var z in $scope.x_o.forms)
+                                {
+                                    if($scope.x_o.forms[z].ID === $scope.x_o.forms[$scope.xList[x].formsName].parentID)
+                                    {
+                                        if($scope.x_o.forms[z].parentID !== undefined && $scope.x_o.forms[z].parentID !== "")
+                                        {
+                                            setReadRights($scope.x_o.forms[z].name);                        }
+                                        }
+                                    }
+                                }
+                            }
+
+                    },
+                    function (err)
+                    {
+                        alert("error modify AccessRights " + JSON.stringify(err));
+                        return false;
+                    }
+                );
+            }
         } else 
         {
             for(var x in $scope.x_o.forms) 
@@ -1266,7 +1450,6 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     };
 
     $scope.xView = function (item) {
-        debugger;
         if($scope.x_o.forms[$scope.x_form]._U){
             $scope.x_page = "EDIT";
         } else {

@@ -136,12 +136,12 @@
                                 </div>
                             </td></tr>
                             <tr><td>
-                                <select style='border:none;color:blue' ng-model='SelLevel' >
+                                <select style='border:none;color:blue' ng-model='SelLevel' ng-change='modifyAccessRights()'>
                                     <option ng-repeat='o in AvailableLevels' value='{{o}}' >{{o}}</option>
                                 </select>
                             </td></tr>
                             <tr><td>
-                                <input type="text" class='form-control' ng-model='SeleRole' placeholder="Role" >
+                                <input type="text" class='form-control' ng-model='SeleRole' ng-change='modifyAccessRights()' placeholder="Role" >on
                             </td></tr>
                         </table>
                     </div>
@@ -150,7 +150,7 @@
                         <table style='border-collapse: collapse;border:0px solid white;'>
                             <tr style='padding-top:0px;padding-bottom: 0px;'>
                                 <td>
-                                    <select style='border:none;font-weight:bold;color:blue' ng-model='SelMod' ng-change='changeModule()'' >
+                                    <select style='border:none;font-weight:bold;color:blue' ng-model='SelMod' ng-change='changeModule()' >
                                         <option ng-repeat='o in AvailableModules' value='{{o.name}}' >{{o.name}}</option>
                                     </select>
                                 </td>

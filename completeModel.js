@@ -186,15 +186,51 @@ function start(x_o) {
                             vh += "<th ng-click=\"orderByMe('" + c.name + "')\">" + c.label + "</th>";
                         }
                         if (c.source !== undefined && c.fieldType === "lookup" && c.source === "table") {
-                            vd += "<td ng-bind='item.infoJSON." + c.lookup + "Name'></td>";
+                            if(x_o.forms[f].pages[p].inlineEDIT){
+                                vd += "<span ng-hide='item._edit'><td ng-bind='item.infoJSON." + c.lookup + "Name'></td></span>";
+                                vd += "<select ng-show='item._edit' class='form-control' ng-model='item.infoJSON." + c.name + "' ";
+                                if (c.lookupFields == undefined) {
+                                    c.lookupFields = ''
+                                }
+                                vd += "ng-change=\"select(item.infoJSON." + c.name + ",'" + c.lookup + "');completeLookupField('ieElement',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "');\" >";
+                                vd += "<OPTION ng-repeat='item in x_o.lookups." + c.lookup + ".tree1' value='{{item.ID}}' ng-selected='item.sel' > ";
+                                vd += "{{spacesListTree(item.level)}} {{item.name}} </OPTION> ";
+                            }else
+                            {
+                                vd += "<td ng-bind='item.infoJSON." + c.lookup + "Name'></td>";
+                            }
                         } else if (c.fieldType === "email") {
-                            vd += "<td><a href='mailto:{{item.infoJSON." + c.name + "}}'target='_blank'><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-envelope'></span></a></td>";
+                            if(x_o.forms[f].pages[p].inlineEDIT)
+                            {
+                                vd += "<span ng-hide='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span>";
+                            }else
+                            {
+                                vd += "<td><a href='mailto:{{item.infoJSON." + c.name + "}}'target='_blank'><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-envelope'></span></a></td>";
+                            }
                         } else if (c.fieldType === "tel") {
-                            vd += "<td><a href='tel:{{item.infoJSON." + c.name + "}}' target='_blank'><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-earphone'></span></a></td>";
+                            if(x_o.forms[f].pages[p].inlineEDIT)
+                            {
+                                vd += "<span ng-hide='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span>";
+                            }else
+                            {
+                                vd += "<td><a href='tel:{{item.infoJSON." + c.name + "}}' target='_blank'><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-earphone'></span></a></td>";
+                            }
                         } else if (c.fieldType === "url") {
-                            vd += "<td><a href='{{item.infoJSON." + c.name + "}}' target='blank'><span ng-if='item.infoJSON." + c.name + "'>http</span></a></td>";
+                            if(x_o.forms[f].pages[p].inlineEDIT)
+                            {
+                                vd += "<span ng-hide='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span>";
+                            }else
+                            {
+                                vd += "<td><a href='{{item.infoJSON." + c.name + "}}' target='blank'><span ng-if='item.infoJSON." + c.name + "'>http</span></a></td>";
+                            }
                         } else if (c.fieldType === "checkBox") {
-                            vd += "<td><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-ok-sign'></span></td>";
+                            if(x_o.forms[f].pages[p].inlineEDIT)
+                            {
+                                vd += "<span ng-hide='item._edit'><input type='" + c.fieldType + "' ng-model='item.infoJSON." + c.name + "' ></span>";
+                            }else
+                            {
+                                vd += "<td><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-ok-sign'></span></td>";
+                            }
                         } else if (c.fieldType === "image") {
                             vd += "<td><img ng-if='item.infoJSON." + c.name + "Path' src='item.infoJSON." + c.name + "Path' alt='item.infoJSON." + c.name + "Caption' style=''width: 42px; height: 42px; border: 0;''></td>";
                         } else if (c.fieldType === "file") {
@@ -219,7 +255,18 @@ function start(x_o) {
                         vt += "<td></td>";
                     }
                 }
-                vd += "<td><a href=\"#\" ng-click=\"xView(item)\"><span class=\"glyphicon glyphicon-eye-open\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,-15)\"><span class=\"glyphicon glyphicon-arrow-up\"></span></a><a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,15)\"><span class=\"glyphicon glyphicon-arrow-down\"></span></a></td>";
+                vd += "<td><a href=\"#\" ng-click=\"xView(item)\"><span class=\"glyphicon glyphicon-eye-open\"></span></a>";
+                if(x_o.forms[f].pages[p].inlineEDIT)
+                {
+                    vd += "<span data-ng-hide='item._edit || ieeditingInProgress'>"; 
+                    vd += "<a data-ng-click='ieeditSwitch(item)' href=\"#\"><span class='glyphicon glyphicon-edit'></span></a>";
+                    vd += "<a data-ng-click='iedelete(item.ID)' href=\"#\"><span class='glyphicon glyphicon-remove'></span></a></span>";
+                    vd += "<span data-ng-show='item._edit'>"; 
+                    vd += "<a data-ng-click='ieupdate(item)' href=\"#\">Save</a>";
+                    vd += "<a data-ng-click='ieeditSwitch(item)' href=\"#\">Cancel</a></span>";
+                }
+                vd += "<a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,-15)\"><span class=\"glyphicon glyphicon-arrow-up\"></span></a>";
+                vd += "<a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,15)\"><span class=\"glyphicon glyphicon-arrow-down\"></span></a></td>";
                 vhtmlList += "<div ng-switch-when='" + x_o.forms[f].pages[p].name + x_o.forms[f].name + "'>";
                 vhtmlList += "<table class='table table-striped' ng-switch='x_form'><thead><tr>" + vh + "</tr></thead><tbody>";
                 if (x_o.forms[f].orderBy === "sequence") {
@@ -266,19 +313,21 @@ function start(x_o) {
                                 case "month":
                                 case "time":
                                 case "week":
+                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='" + c.fieldType + "' class='form-control' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    break;
                                 case "checkBox":
-                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='" + c.fieldType + "' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='" + c.fieldType + "' class='{{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
                                     break;
                                 case "date":
                                 case "local":
-                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='date' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='date' class='form-control' ng-model='xElement.infoJSON." + c.name + "' >";
                                     break;
                                 case "datetime":
-                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='datetime-local' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='datetime-local' class='form-control' ng-model='xElement.infoJSON." + c.name + "' >";
                                     break;
                                 case "number": // input type number does not display value, replaced by text
                                     if (c.autoNumber || c.calcNumber) { // readonly
-                                        vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' readonly >";
+                                        vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control' ng-model='xElement.infoJSON." + c.name + "' readonly >";
                                         if (c.autoNumber && !vFieldsAuto.includes(c.name)) {
                                             vFieldsAuto += c.name + ",";
                                         }
@@ -286,11 +335,11 @@ function start(x_o) {
                                             vFieldsTotal += c.name + ",";
                                         }
                                     } else {
-                                        vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                        vhtmlView += "<input readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " type='text' class='form-control' ng-model='xElement.infoJSON." + c.name + "' >";
                                     }
                                     break;
                                 case "textArea":
-                                    vhtmlView += "<textarea readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " rows='" + c.rows + "' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ></textarea>";
+                                    vhtmlView += "<textarea readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " rows='" + c.rows + "' class='form-control' ng-model='xElement.infoJSON." + c.name + "' ></textarea>";
                                     break;
                                 case "image":
                                     vhtmlEdit += "<div class='form-group'><div class='row'><div class='col-xs-8'>";
@@ -315,7 +364,7 @@ function start(x_o) {
                                     break;
                                 case "lookup":
                                     if (c.source === "table") {
-                                        vhtmlView += "<select readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
+                                        vhtmlView += "<select readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control' ng-model='xElement.infoJSON." + c.name + "' ";
                                         if (c.lookupFields == undefined) {
                                             c.lookupFields = ''
                                         }
@@ -324,14 +373,14 @@ function start(x_o) {
                                         vhtmlView += "{{spacesListTree(item.level)}} {{item.name}} </OPTION> ";
                                     }
                                     if (c.source === "model") {
-                                        vhtmlView += "<select readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' ";
+                                        vhtmlView += "<select readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control' ng-model='xElement.infoJSON." + c.name + "' ";
                                         vhtmlView += " ng-options='" + c.modelPath + "' >";
                                         if (c.other) {
                                             vhtmlView += "<input readonly type='text' class='form-control' placeholder='Enter free text option' ng-model='xElement.infoJSON." + c.name + "'>";
                                         }
                                     }
                                     if (c.source === "specific") {
-                                        vhtmlView += "<select readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                        vhtmlView += "<select readonly id='V" + x_o.forms[f].name + c.name + "' " + vhide + " class='form-control' ng-model='xElement.infoJSON." + c.name + "' >";
                                     }
                                     if (c.specific !== undefined) {
                                         result = c.specific.match(/\w+/g);
@@ -429,8 +478,10 @@ function start(x_o) {
                                 case "month":
                                 case "time":
                                 case "week":
-                                case "checkBox":
                                     vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='" + c.fieldType + "' class='form-control {{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
+                                    break;
+                                case "checkBox":
+                                    vhtmlEdit += "<input id='" + x_o.forms[f].name + c.name + "' " + vhide + " type='" + c.fieldType + "' class='{{x_o.forms[x_form].pages[x_page].fields[" + c.name + "].validation}}' ng-model='xElement.infoJSON." + c.name + "' >";
                                     break;
                                 case "date":
                                 case "local":
