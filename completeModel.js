@@ -185,67 +185,135 @@ function start(x_o) {
                         } else {
                             vh += "<th ng-click=\"orderByMe('" + c.name + "')\">" + c.label + "</th>";
                         }
-                        if (c.source !== undefined && c.fieldType === "lookup" && c.source === "table") {
-                            if(x_o.forms[f].pages[p].inlineEDIT){
-                                vd += "<span ng-hide='item._edit'><td ng-bind='item.infoJSON." + c.lookup + "Name'></td></span>";
+                        if (c.source !== undefined && c.fieldType === "lookup" && c.source === "specific") {
+                            if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly){
+                                vd += "<td><span ng-hide='item._edit ng-bind='item.infoJSON." + c.name + "'></span>";
+                                vd += "<select ng-show='item._edit'><select class='form-control' ng-model='xElement.infoJSON." + c.name + "' >";
+                                var result = c.specific.match(/\w+/g);
+                                for (x in result) {
+                                    if (result[x] === "_") {
+                                        vd += "<option value = '' > -- none --</option>";
+                                    } else {
+                                        var xx = result[x].split(":");
+                                        if(xx.length>1){
+                                            vd += "<option value = '" + xx[0] + "' >" + xx[1] + "</option>"; 
+                                        }else{
+                                            vd += "<option value = '" + result[x] + "' >" + result[x] + "</option>";
+                                        }
+                                    }
+                                }
+                                vd += "</select></td>";
+                            }else
+                            {
+                                vd += "<td ng-bind='item.infoJSON." + c.name + "'></td>";
+                            }
+                        } else if (c.source !== undefined && c.fieldType === "lookup" && c.source === "table") {
+                            if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly){
+                                vd += "<td><span ng-hide='item._edit'><span ng-bind='item.infoJSON." + c.lookup + "Name'></span></span>";
                                 vd += "<select ng-show='item._edit' class='form-control' ng-model='item.infoJSON." + c.name + "' ";
                                 if (c.lookupFields == undefined) {
                                     c.lookupFields = ''
                                 }
                                 vd += "ng-change=\"select(item.infoJSON." + c.name + ",'" + c.lookup + "');completeLookupField('ieElement',x_o.lookups." + c.lookup + ".name,'" + c.lookupFields + "');\" >";
                                 vd += "<OPTION ng-repeat='item in x_o.lookups." + c.lookup + ".tree1' value='{{item.ID}}' ng-selected='item.sel' > ";
-                                vd += "{{spacesListTree(item.level)}} {{item.name}} </OPTION> ";
+                                vd += "{{spacesListTree(item.level)}} {{item.name}} </OPTION></select></td>";
                             }else
                             {
                                 vd += "<td ng-bind='item.infoJSON." + c.lookup + "Name'></td>";
                             }
                         } else if (c.fieldType === "email") {
-                            if(x_o.forms[f].pages[p].inlineEDIT)
+                            if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
                             {
-                                vd += "<span ng-hide='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span>";
+                                vd += "<td><span ng-hide='item._edit'><a href='mailto:{{item.infoJSON." + c.name + "}}'target='_blank'><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-envelope'></span></a></span>";
+                                vd += "<span ng-show='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span></td>";
                             }else
                             {
                                 vd += "<td><a href='mailto:{{item.infoJSON." + c.name + "}}'target='_blank'><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-envelope'></span></a></td>";
                             }
                         } else if (c.fieldType === "tel") {
-                            if(x_o.forms[f].pages[p].inlineEDIT)
+                            if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
                             {
-                                vd += "<span ng-hide='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span>";
+                                vd += "<td><span ng-hide='item._edit'><a href='tel:{{item.infoJSON." + c.name + "}}' target='_blank'><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-earphone'></span></a></span>";
+                                vd += "<span ng-show='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span></td>";                            
                             }else
                             {
                                 vd += "<td><a href='tel:{{item.infoJSON." + c.name + "}}' target='_blank'><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-earphone'></span></a></td>";
                             }
                         } else if (c.fieldType === "url") {
-                            if(x_o.forms[f].pages[p].inlineEDIT)
+                            if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
                             {
-                                vd += "<span ng-hide='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span>";
+                                vd += "<td><span ng-hide='item._edit'><a href='{{item.infoJSON." + c.name + "}}' target='blank'><span ng-if='item.infoJSON." + c.name + "'>http</span></a></span>";
+                                vd += "<span ng-show='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span></td>";                            
                             }else
                             {
                                 vd += "<td><a href='{{item.infoJSON." + c.name + "}}' target='blank'><span ng-if='item.infoJSON." + c.name + "'>http</span></a></td>";
                             }
                         } else if (c.fieldType === "checkBox") {
-                            if(x_o.forms[f].pages[p].inlineEDIT)
+                            if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
                             {
-                                vd += "<span ng-hide='item._edit'><input type='" + c.fieldType + "' ng-model='item.infoJSON." + c.name + "' ></span>";
+                                vd += "<td><span ng-hide='item._edit' ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-ok-sign'></span>";
+                                vd += "<span ng-show='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span></td>";                            
                             }else
                             {
                                 vd += "<td><span ng-if='item.infoJSON." + c.name + "' class='glyphicon glyphicon-ok-sign'></span></td>";
                             }
                         } else if (c.fieldType === "image") {
-                            vd += "<td><img ng-if='item.infoJSON." + c.name + "Path' src='item.infoJSON." + c.name + "Path' alt='item.infoJSON." + c.name + "Caption' style=''width: 42px; height: 42px; border: 0;''></td>";
+                            if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
+                            {
+                                vd += "<td><span ng-hide='item._edit'><img ng-if='item.infoJSON." + c.name + "Path' src='item.infoJSON." + c.name + "Path' alt='item.infoJSON." + c.name + "Caption' style=''width: 42px; height: 42px; border: 0;''></span>";
+                                vd += "<span ng-show='item._edit'><input type='text' class='form-control' ng-model='item.infoJSON." + c.name + "Path' placeholder='Enter path' ></span></td>";                            
+                            }else
+                            {
+                                vd += "<td><img ng-if='item.infoJSON." + c.name + "Path' src='item.infoJSON." + c.name + "Path' alt='item.infoJSON." + c.name + "Caption' style=''width: 42px; height: 42px; border: 0;''></td>";                            
+                            }
                         } else if (c.fieldType === "file") {
-                            vd += "<td><span ng-if='item.infoJSON." + c.name + "Caption'>item.infoJSON." + c.name + "Caption </span></td>";
+                            if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
+                            {
+                                vd += "<td><span ng-hide='item._edit' ng-if='item.infoJSON." + c.name + "Caption'>item.infoJSON." + c.name + "Caption </span>";
+                                vd += "<span ng-show='item._edit'><input type='text' class='form-control' ng-model='item.infoJSON." + c.name + "Caption' placeholder='Enter caption' ></span></td>";                            
+                            }else
+                            {
+                                vd += "<td><span ng-if='item.infoJSON." + c.name + "Caption'>item.infoJSON." + c.name + "Caption </span></td>";
+                            }
                         } else {
                             if (c.fieldType === 'number') {
                                 if (c.fractionSize === undefined) {
-                                    vd += "<td align='right' ng-bind='item.infoJSON." + c.name + " | number : 2'></td>";
-                                } else {
-                                    vd += "<td align='right' ng-bind='item.infoJSON." + c.name + " | number : " + c.fractionSize + "'></td>";
+                                    if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
+                                    {
+                                        vd += "<td><span ng-hide='item._edit'><span align='right' ng-bind='item.infoJSON." + c.name + " | number : 2'></span></span>";
+                                        vd += "<span ng-show='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span></td>";                            
+                                    }else
+                                    {
+                                        vd += "<td align='right' ng-bind='item.infoJSON." + c.name + " | number : 2'></td>";
+                                    }
+                                 } else {
+                                    if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
+                                    {
+                                        vd += "<td><span ng-hide='item._edit'><span align='right' ng-bind='item.infoJSON." + c.name + " | number : " + c.fractionSize + "'></span></span>";
+                                        vd += "<span ng-show='item._edit'><input type='" + c.fieldType + "' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span></td>";                            
+                                    }else
+                                    {
+                                        vd += "<td align='right' ng-bind='item.infoJSON." + c.name + " | number : " + c.fractionSize + "'></td>";
+                                    }
                                 }
                             } else if (c.fieldType === 'date' || c.fieldType === 'local') {
-                                vd += "<td ng-bind='item.infoJSON." + c.name + ".substring(0, 10) | date '></td>";
+                                if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
+                                {
+                                    vd += "<td><span ng-hide='item._edit'><span ng-bind='item.infoJSON." + c.name + ".substring(0, 10) | date '></span></span>";
+                                    vd += "<span ng-show='item._edit'><input type='date' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span></td>";                            
+                                }else
+                                {
+                                    vd += "<td ng-bind='item.infoJSON." + c.name + ".substring(0, 10) | date '></td>";
+                                }
                             } else {
-                                vd += "<td ng-bind='item.infoJSON." + c.name + "'></td>";
+                                if(x_o.forms[f].pages[p].inlineEDIT && !x_o.forms[f].pages[p].fields[fi].readOnly)
+                                {
+                                    vd += "<td><span ng-hide='item._edit'><span ng-bind='item.infoJSON." + c.name + "'></span></span>";
+                                    vd += "<span ng-show='item._edit'><input type='text' class='form-control' ng-model='item.infoJSON." + c.name + "' ></span></td>";                            
+                                }else
+                                {
+                                    vd += "<td ng-bind='item.infoJSON." + c.name + "'></td>";
+                                }
                             }
                         }
                     }
@@ -259,10 +327,10 @@ function start(x_o) {
                 if(x_o.forms[f].pages[p].inlineEDIT)
                 {
                     vd += "<span data-ng-hide='item._edit || ieeditingInProgress'>"; 
-                    vd += "<a data-ng-click='ieeditSwitch(item)' href=\"#\"><span class='glyphicon glyphicon-edit'></span></a>";
-                    vd += "<a data-ng-click='iedelete(item.ID)' href=\"#\"><span class='glyphicon glyphicon-remove'></span></a></span>";
+                    vd += "<a ng-show='x_o.forms[x_form]._U' data-ng-click='ieeditSwitch(item)' href=\"#\"><span class='glyphicon glyphicon-edit'></span></a>";
+                    vd += "<a ng-show='x_o.forms[x_form]._D' data-ng-click='iedelete(xEditForm)' href=\"#\"><span class='glyphicon glyphicon-remove'></span></a></span>";
                     vd += "<span data-ng-show='item._edit'>"; 
-                    vd += "<a data-ng-click='ieupdate(item)' href=\"#\">Save</a>";
+                    vd += "<a data-ng-click='ieupdate(xEditForm)' href=\"#\">Save</a>";
                     vd += "<a data-ng-click='ieeditSwitch(item)' href=\"#\">Cancel</a></span>";
                 }
                 vd += "<a ng-show=\"x_o.forms[x_form].orderBy == 'sequence'\" href=\"#\" ng-click=\"xUpDown(item,-15)\"><span class=\"glyphicon glyphicon-arrow-up\"></span></a>";
@@ -346,7 +414,7 @@ function start(x_o) {
                                     vhtmlEdit += "<label>" + c.label + " </label>";
                                     vhtmlEdit += "<img ng-src=\"{{xElement.infoJSON." + c.name + "Path}}\" class='img-rounded' width=\"{{xElement.infoJSON." + c.name + "Width}}\" height=\"{{xElement.infoJSON." + c.name + "Height}}\">";
                                     vhtmlEdit += "</div></div></div>";
-                                    vhtmlEdit += "<input readonly type='text' class='form-control' placeholder='Enter Capture' ng-model='xElement.infoJSON." + c.name + "Capture'>";
+                                    vhtmlEdit += "<input readonly type='text' class='form-control' placehoplaceholder='Enter Capture' ng-model='xElement.infoJSON." + c.name + "Capture'>";
                                     vhtmlEdit += "<textarea readonly rows='5' class='form-control' placeholder='Enter Comment' ng-model='xElement.infoJSON." + c.name + "Comment'></textarea>";
                                     break;
                                 case "utube":
@@ -451,7 +519,6 @@ function start(x_o) {
                             if (c.hideIf !== undefined) {
                                 vhide = " ng-hide=\"" + c.hideIf.replace(/_/gi, "xElement.infoJSON.").replace(/::/gi, "'") + "\" "; // replace _ by xElement.infoJSON and :: by '
                             }
-                            if(x_o.forms[f].pages[p].fields[fi].readOnly){ vhide += " readonly "} // for editable forms with locked fields
                             switch (c.fieldType) { // label
                                 case "tel":
                                     vhtmlEdit += "<label for='" + x_o.forms[f].name + c.name + "'" + vhide + "><a href='tel:{{xElement.infoJSON." + c.name + "}}' target='_blank'><span ng-if='xElement.infoJSON." + c.name + "' class='glyphicon glyphicon-earphone'></span></a></label >";
@@ -470,6 +537,7 @@ function start(x_o) {
                                     vhtmlEdit += "<label for='" + x_o.forms[f].name + c.name + "'" + vhide + ">" + c.label + "</label >";
                                     break;
                             }
+                            if(x_o.forms[f].pages[p].fields[fi].readOnly){ vhide += " readonly "} // for editable forms with locked fields
                             switch (c.fieldType) { // input 
                                 case "text":
                                 case "password":
@@ -583,7 +651,12 @@ function start(x_o) {
                                             if (result[x] === "_") {
                                                 vhtmlEdit += "<option value = '' > -- none --</option>";
                                             } else {
-                                                vhtmlEdit += "<option value = '" + result[x] + "' >" + result[x] + "</option>";
+                                                var xx = result[x].split(":");
+                                                if(xx.length>1){
+                                                    vhtmlEdit += "<option value = '" + xx[0] + "' >" + xx[1] + "</option>"; 
+                                                }else{
+                                                    vhtmlEdit += "<option value = '" + result[x] + "' >" + result[x] + "</option>";
+                                                }
                                             }
                                         }
                                     }

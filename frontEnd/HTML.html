@@ -245,7 +245,7 @@
                         by {{myOrderBy.substring(9)}}</span>
                     <input type="range" name="points" min="1" max="{{x_rowsMax}}" step="1" ng-model="x_pageCt" ng-change="xInit()">
                     <div class="btn-group btn-group-justified">
-                        <button ng-click="xAdd()" ng-show="x_o.forms[x_form]._C" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
+                        <button ng-click="xAdd(xEditForm)" ng-show="x_o.forms[x_form]._C" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
                         <a href="#" class="btn btn-primary" ng-click="xInitSearch()" ng-show="x_o.forms[x_form].pages.SEARCH">Search</a>
                         <a href="#" class="btn btn-primary" ng-click="chart()" ng-show="x_o.forms[x_form].pages[x_page].graph">Chart</a>
                         <a href="#" class="btn btn-primary" ng-click="carousel()" ng-show="x_o.forms[x_form].pages[x_page].carousel">Carousel</a>
@@ -263,7 +263,7 @@
 
                 <div class="panel" ng-show="x_page == 'TREE'">
                     <div class="btn-group btn-group-justified">
-                        <button ng-click="xAdd()" ng-show="x_o.forms[x_form]._C" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
+                        <button ng-click="xAdd(xEditForm)" ng-show="x_o.forms[x_form]._C" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
                         <a href="#" class="btn btn-primary" ng-click="treeCollapse()">collapse all</a>
                         <a href="#" class="btn btn-primary" ng-click="treeExpand()">show all</a>
                     </div>

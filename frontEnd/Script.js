@@ -559,35 +559,100 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
     $scope.ieeditingInProgress = false;
 
 
-    $scope.ieeditSwitch = function (todo) { 
-        $scope.xElement.edit = !$scope.xElement.edit; 
-        if ($scope.xElement.edit) { 
-            $scope.ieElement = $scope.xElement; 
+    $scope.ieeditSwitch = function (item) { 
+        item.edit = !item.edit; 
+        if (item.edit) { 
+            $scope.ieElement = item; 
             $scope.ieeditingInProgress = true; 
         } else { 
             $scope.ieeditingInProgress = false; 
         } 
     }; 
 
-    $scope.iedelete = function (id) { 
+    $scope.iedelete = function (f) { 
         if (confirm("confirm deletion") == true) { 
-            $http.delete($scope.apiEndpoint + '/api/Laundry/' + id).then 
-                (function (response) { 
-                    $scope.initLaundry(); 
-                }, function (err) { 
-                    alert(JSON.parse(err)); 
-                }); 
+            $scope.xElement = $scope.ieElement;
+            var vst = "";
+            if ($scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]] !== undefined && $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]] !== '') {
+                if ($scope.x_o.forms[$scope.x_form].detachSubLevel !== undefined && $scope.x_o.forms[$scope.x_form].detachSubLevel) {
+                    vst = $scope.x_o.forms[$scope.x_o.forms[$scope.x_form].subForms[0]].tablesName;
+                }
+            }
+            $http.get($scope.sloc + 'KB_x_delete?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&subtable=' + vst).then
+            (function (response) {
+                if(vst !== ""){
+                    // unlink tree children in xList assumed to contain all rows for masterID
+                    for(var x in $scope.xList){
+                        if($scope.xList[x].parentID.includes($scope.xElement.ID)){
+                            $scope.xList[x].parentID = $scope.xList[x].parentID.replace($scope.xElement.ID,"");
+                            $http.post("$scope.sloc + 'KB_x_addUpdate?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xList[x].ID + '&masterID=' + $scope.xList[x].masterID + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&parentID=' + $scope.xList[x].parentID + '&sequence=' + $scope.xList[x].sequence + '&uid=' + userid",JSON.stringify($scope.xList[x].infoJSON)).then                                 
+                            (function (response) {
+                            }, function (err) {
+                                alert("error removing links in children");
+                            });
+                            deleteAllSublevelTables($scope.xElement.ID,$scope.x_o.forms[$scope.x_form].tablesID);
+                        }
+                    }
+                }
+                $scope.xCancel(f);
+            }, function (err) {
+                alert("error deletion");
+                $scope.xCancel(f);
+            });
         } 
     }; 
 
-    $scope.ieupdate = function (todo) { 
-        $http.post($scope.apiEndpoint + '/api/Laundry', JSON.stringify($scope.editInProgressLaundry)).then 
-          (function (response) { 
-              $scope.initLaundry(); 
-              $scope.editSwitchLaundry(todo); 
-          }, function (err) { 
-              alert(JSON.parse(err)); 
-          }) 
+    $scope.ieupdate = function (f) {
+        $scope.xElement = $scope.ieElement; 
+        $scope.xElement._edit = null;
+        // automatic recalc
+        if($scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].uniqueColumns !== undefined) {
+            var uc = $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].uniqueColumns;
+            if(uc !==  ""){
+                var xSearchSql = {};
+                xSearchSql.params = [];
+                xSearchSql.sql = "";
+                var t = uc.split(",");
+                for(var x in t){ // set up search from xElement
+                    if(xSearchSql.sql.length > 0){xSearchSql.sql += " AND ";}
+                    if(t[x] == "masterID"){
+                        xSearchSql.sql += "masterID = '" + $scope.xElement.masterID + "'";
+                    }else{
+                        xSearchSql.sql += "JSON_VALUE(infoJSON,'$." +t[x] + "') = '" + $scope.xElement.infoJSON[t[x]] + "'";
+                    }
+                    var ho = {};
+                    ho.field = t[x];
+                    ho.compare = "=";
+                    ho.value = $scope.xElement.infoJSON[t[x]];
+                    xSearchSql.params.push(ho);
+                }
+                $http.post($scope.sloc + 'KB_x_getAll?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&jsonFields=' + $scope.x_o.forms[$scope.x_form].fieldsJSON + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&masterID=%&rowsPage=999&pageCt=1', JSON.stringify(xSearchSql)).then
+                (function (response) {
+                    var ok = false; // for unique values test
+                    if(response.data.rv.length > 0){
+                        if($scope.xElement.ID == "") {
+                            alert("unique values required for " + $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].uniqueColumns);
+                        } else {
+                            if($scope.xElement.ID === response.data.rv[0].ID){
+                                ok = true;
+                            } else {
+                                alert("unique values required for " + $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].uniqueColumns);
+                            }
+                        }
+                    } else {
+                        ok = true;
+                    }
+                    if(ok){xSavesuite(f);}
+                }, function (err) {
+                    alert("error checkUnique " + JSON.stringify(err));
+                });
+            } else {
+                xSavesuite(f);
+            }
+        } else {
+            xSavesuite(f);
+        }
+
     }; 
 
     setDefaults = function () { // for empty xElement fields
@@ -1401,6 +1466,9 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             $scope.xTree = [];
             for (var x in $scope.xList) {
                 $scope.xList[x]._sequence = x;
+                if($scope.x_o.forms[$scope.x_form].pages[$scope.x_page].inlineEDIT){
+                    $scope.xList[x]._edit = false;
+                }
             }
             buildTree(-1, "");
             $scope.xTotal = {};
@@ -1431,7 +1499,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         });
     };
 
-    $scope.xAdd = function () {
+    $scope.xAdd = function (f) {
         $scope.x_page = "EDIT";
         $scope.xElement = {
             "ID": "",
@@ -1446,6 +1514,14 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
         var y = "" + $scope.x_o.forms[$scope.x_form].fieldsMap;
         if (y !== "") {
             initMap(y);
+        }
+        if($scope.x_o.forms[$scope.x_form].pages[x_page].inlineEDIT){
+            // save without any validation
+            $http.post($scope.sloc + 'KB_x_addUpdate?module=' + defDB($scope.x_o.name, $scope.x_o.tables[$scope.x_o.forms[$scope.x_form].tablesID].db) + '&table=' + $scope.x_o.forms[$scope.x_form].tablesName + '&ID=' + $scope.xElement.ID + '&masterID=' + $scope.x_masterID + '&parentID=' + $scope.xElement.parentID + '&orderBy=' + $scope.x_o.forms[$scope.x_form].orderBy + '&sequence=' + $scope.xElement.sequence + '&uid=' + userid, JSON.stringify($scope.xElement.infoJSON)).then(function (response) {
+                $scope.xCancel(f);
+            }, function (err) {
+                alert("save error inline add");
+            });
         }
     };
 
@@ -2138,7 +2214,7 @@ mmApp.controller("mmCtrl", function ($scope, $timeout, $http, $sce) {
             if (vob !== "") {
                 vob += " , ";
             }
-            var xx = x[v].split(":")
+            var xx = x[v].split(":");
             if (xx[0] === "sequence" || xx[0] === "name" || xx[0] === "date" ) {
                 vob += " " + xx[0];
             } else {
