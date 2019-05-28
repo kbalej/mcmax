@@ -141,7 +141,7 @@
                                 </select>
                             </td></tr>
                             <tr><td>
-                                <input type="text" class='form-control' ng-model='SeleRole' ng-change='modifyAccessRights()' placeholder="Role" >on
+                                <input type="text" class='form-control' ng-model='SelRole' ng-change='modifyAccessRights()' placeholder="Role" >
                             </td></tr>
                         </table>
                     </div>
@@ -167,14 +167,14 @@
                         <table style='border-collapse: collapse;border:0px;padding-top:0px;padding-bottom:0px;width:50%'>
                             <tr style='padding-top:0px;padding-bottom:0px;width:50%'>
                                 <td style="font-weight:bold;;color:blue">
-                                    <div class="down" ng-show="xEditForm.$pristine && x_page.substring(0, 4) === 'EDIT' && x_o.forms[x_form].subForms.length > 0">
+                                    <div class="down" ng-show="xEditForm.$pristine && (x_page.substring(0, 4) === 'EDIT' || x_page.substring(0, 4) === 'VIEW') && x_o.forms[x_form].subForms.length > 0">
                                         <table style='border-collapse: collapse;border:0px solid white;'>
                                             <tr style='padding-top:0px;padding-bottom: 0px;'>
                                                 <td><a class="navbar-brand" href="#"><span class="glyphicon glyphicon-arrow-down"></span></a></td>
                                                 <td style='font-weight:bold;color:red;padding-top:0px;padding-bottom: 0px;'>
                                                     <ul class="nav navbar-nav" ng-show="xEditForm.$pristine && x_o.forms[x_form].subForms.length > 0"
                                                     ng-repeat="i in x_o.forms[x_form].subForms">
-                                                        <li ng-show="x_o.forms[i]._R"><a href="#" ng-click="navDown(i)"><span ng-bind="getDescripton(i)"></span></a></li>
+                                                        <li ng-show="x_o.forms[i]._R"><a href="#" ng-click="navDown(i)"><span ng-bind="getDescription(i)"></span></a></li>
                                                     </ul>
                                                 </td>
                                             </tr>
@@ -203,9 +203,9 @@
                     </div>
 
                     <div class="pageTabs">
-                        <div ng-show="x_page == 'LIST' || x_page == 'TREE'">
+                        <div ng-show="x_page == 'LIST' || x_page == 'TREE' || x_page == 'MAPS' || x_page == 'MAPM'">
                             <ul class="nav navbar-nav" ng-repeat="i in x_o.forms[x_form].pages">
-                                <li ng-show="i.name == 'LIST' || i.name == 'TREE'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
+                                <li ng-show="i.name == 'LIST' || i.name == 'TREE' || i.name == 'MAPS' || i.name == 'MAPM'"><a href="#" ng-click="navTab(i.name)">{{i.name}}</a></li>
                             </ul>
                         </div>
                         <div ng-show="x_page.substring(0, 4) === 'EDIT'">
@@ -218,8 +218,7 @@
             </div>
 
             <div class="content"></div>
-                <div id="Googlemap" ng-show="x_o.forms[x_form].fieldsMap && x_o.forms[x_form].fieldsMap.length > 0 && x_page.substring(0, 7) == 'EDITmap'"
-                    style="height: 500px; width: 100%;"></div>
+                <div id="Googlemap" ng-show="x_o.forms[x_form].pages[x_page].mapHeight" style="width: 100%; height: 700px;"></div>
 
                 <!--SEARCH-->
 
@@ -258,7 +257,6 @@
                     </div>
                 </div>
 
-
                 <!--TREE not form specific, creates 2D by setting parentID-->
 
                 <div class="panel" ng-show="x_page == 'TREE'">
@@ -266,6 +264,7 @@
                         <button ng-click="xAdd(xEditForm)" ng-show="x_o.forms[x_form]._C" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
                         <a href="#" class="btn btn-primary" ng-click="treeCollapse()">collapse all</a>
                         <a href="#" class="btn btn-primary" ng-click="treeExpand()">show all</a>
+                        <a href="#" class="btn btn-primary" ng-click="saveCode()" ng-show="x_o.forms[x_form].pages[x_page].saveCode">save code</a>
                     </div>
                     <hr>
                     <table>
@@ -278,9 +277,14 @@
                     </table>
                 </div>
 
+                <!--MAPS or MAPM not form specific-->
+
+                <div class="panel" ng-show="x_page == 'MAPS' || x_page == 'MAPM'">
+                </div>                
+
                 <!--EDIT-->
 
-                <form role="form" name="xEditForm" ng-show="x_page.substring(0, 4) == 'EDIT'" novalidate autocomplete="new-password">
+                <form role="form" name="xEditForm" ng-show="x_page.substring(0, 4) == 'EDIT'" novalidate>
                     <div id="editItems" class="form-group" ng-switch="x_page + x_form">
                         <div ng-switch-when='EDITmydata'>
                             <hr>
