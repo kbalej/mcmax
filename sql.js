@@ -3,9 +3,45 @@ var Request = require('tedious').Request;
 var TYPES = require('tedious').TYPES;
 var buildModel = require("./buildModel");
 var fs = require('fs');
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
 var sss = require('./sss');
 var exportMongo = require('./exportMongo');
 var exportMySql = require('./exportMySql');
+var saveCode = require('./saveCode');
+var flightscheduler = require("./flightscheduler");
+
+var oCreateTable = function () {
+    oCreateTable.prototype.handle = function (m, vtable, connection) {
+        var status = "ERROR";
+        queryDatabase(vtable, connection);
+        function queryDatabase(vtable, connection) {
+            var vs = "IF EXISTS(SELECT * FROM " + vtable + ") DROP TABLE " + vtable;
+            var vsql = "CREATE TABLE " + vtable + "( [ID] nvarchar(50) NOT NULL, [masterID] nvarchar(50) NULL, [parentID] nvarchar(500) NULL,";
+            vsql += "[sequence] [int] NULL, [ts] [timestamp] NULL, uid nvarchar(50) NULL, [name] AS (json_value([infoJSON],'$.name')), ";
+            vsql += "[date] AS (json_value([infoJSON],'$.date')), [infoJSON] nvarchar(max) NULL, "; // use ISO _date 
+            vsql += "CONSTRAINT [PK_" + vtable + "] PRIMARY KEY CLUSTERED ( [ID] ASC )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY] ) ON [PRIMARY];";
+            vsql += "ALTER TABLE [dbo].[" + vtable + "] ADD CONSTRAINT [DF_" + vtable + "_ID] DEFAULT (newid()) FOR [ID];";
+            vsql += "ALTER TABLE [dbo].[" + vtable + "] ADD CONSTRAINT [DF_" + vtable + "_masterID] DEFAULT '' FOR [masterID];";
+            vsql += "ALTER TABLE [dbo].[" + vtable + "] ADD CONSTRAINT [DF_" + vtable + "_parentID] DEFAULT '' FOR [parentID];";
+            vsql += "ALTER TABLE [dbo].[" + vtable + "] ADD CONSTRAINT [DF_" + vtable + "_uid] DEFAULT '' FOR [uid];";
+            vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_masterID] ON " + vtable + " ([masterID] ASC) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY];";
+            vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_name] ON " + vtable + " ([name] ASC) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY];";
+            vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_date] ON " + vtable + " ([date] ASC) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY];";
+            var request10 = new Request(vs, function () {});
+            request10.on('requestCompleted', function () {
+                var request14 = new Request(vsql, function () {});
+                request14.on('requestCompleted', function () {
+                    status = "OK";
+                    m.emit('done', status);
+                });
+                connection.execSql(request14);
+            });
+            connection.execSql(request10);                
+        }
+    };
+};
+
 
 var cvt = function (result) {
     var o = [];
@@ -46,11 +82,11 @@ var cvt2 = function (result) {
     return o;
 };
 
+
 function start(storedProcedure, response, postData, querystring, io, callback) {
     var config = sss.start().sql;
     var rv = "OK";
     var vrows = "";
-    var vmax = [];
     var ooo = {};
     var connection = new Connection(config);
     connection.on('connect', function (err) {
@@ -76,6 +112,21 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                 }
             );
             switch (storedProcedure) {
+                case "KB_website":
+                    vrows = "";
+                    var request29 = new Request("SELECT infoJSON FROM KB_functions WHERE name = 'frontEnd/index.html';", function () {});
+                    request29.on('row', function (rows) {
+                        vrows += rows[0].value;
+                    });
+                    request29.on('requestCompleted', function () {
+                        var h = JSON.parse(vrows);
+                        response.writeHead(200, {"Content-Type": "html"});
+                        response.write(h.code);
+                        response.end();
+                        connection.close();
+                    });
+                    connection.execSql(request29);
+                    return;
                 case "KB_getStats":
                     vrows = "";
                     var request19 = new Request("SELECT TOP 10 SUBSTRING(date,1,10) nYear, count(*) Tnet FROM KB_logins GROUP BY SUBSTRING(date,1,10) ORDER By SUBSTRING(date,1,10) DESC FOR JSON PATH;SELECT TOP 10 b.name Service, count(*) Tnet FROM KB_logins a INNER JOIN KB_users b ON a.masterID = b.ID GROUP BY b.name ORDER By count(*) DESC  FOR JSON PATH;", function () {});
@@ -92,7 +143,7 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                     return;
                 case "KB_buildModel":
                     vrows = "";
-                    var request0 = new Request("SELECT * FROM KB_modules FOR JSON PATH; SELECT * FROM KB_forms ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_pages ORDER BY sequence FOR JSON PATH;	SELECT * FROM KB_fields ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_tables FOR JSON PATH; SELECT * FROM KB_columns FOR JSON PATH;", function (err, rowCount, rows) {
+                    var request0 = new Request("SELECT * FROM KB_modules FOR JSON PATH; SELECT * FROM KB_forms ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_pages ORDER BY sequence FOR JSON PATH;	SELECT * FROM KB_fields ORDER BY sequence FOR JSON PATH; SELECT * FROM KB_tables FOR JSON PATH; SELECT * FROM KB_columns FOR JSON PATH;SELECT infoJSON FROM KB_functions WHERE name = 'frontEnd/HTML.html' OR name = 'frontEnd/Script.js' FOR JSON PATH;", function (err, rowCount, rows) {
                         if (err) {
                             response.writeHead(300, {"Content-Type": "text/plain"});
                             response.write(JSON.stringify(err));
@@ -110,6 +161,7 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                         t = t.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
                         t = t.replace("}][{", "}],[{");
+                        t = t.replace("}][{", "}],[{");
                         t = "[" + t.replace("}][{", "}],[{") + "]";
                         var tt = JSON.parse(t);
                         for (x in tt) {
@@ -121,7 +173,8 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                         var vfields = tt[3];
                         var vtables = tt[4];
                         var vcolumns = tt[5];
-                        buildModel.start(vmodules, vforms, vpages, vfields, vtables, vcolumns, querystring, io, callback);
+                        var vFiles = tt[6];
+                        buildModel.start(vmodules, vforms, vpages, vfields, vtables, vcolumns, vFiles, querystring, io, callback);
                         connection.close();
                     });
                     connection.execSql(request0);
@@ -168,32 +221,56 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                     return;
                 case "KB_table":
                     var vtable = querystring.module + "_" + querystring.table;
-                    var vs = "IF EXISTS(SELECT * FROM " + vtable + ") DROP TABLE " + vtable;
-                    var vsql = "CREATE TABLE " + vtable + "( [ID] nvarchar(50) NOT NULL, [masterID] nvarchar(50) NULL, [parentID] nvarchar(500) NULL,";
-                    vsql += "[sequence] [int] NULL, [ts] [timestamp] NULL, uid nvarchar(50) NULL, [name] AS (json_value([infoJSON],'$.name')), ";
-                    vsql += "[date] AS (json_value([infoJSON],'$.date')), [infoJSON] nvarchar(max) NULL, "; // use ISO _date 
-                    vsql += "CONSTRAINT [PK_" + vtable + "] PRIMARY KEY CLUSTERED ( [ID] ASC )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY] ) ON [PRIMARY];";
-                    vsql += "ALTER TABLE [dbo].[" + vtable + "] ADD CONSTRAINT [DF_" + vtable + "_ID] DEFAULT (newid()) FOR [ID];";
-                    vsql += "ALTER TABLE [dbo].[" + vtable + "] ADD CONSTRAINT [DF_" + vtable + "_masterID] DEFAULT '' FOR [masterID];";
-                    vsql += "ALTER TABLE [dbo].[" + vtable + "] ADD CONSTRAINT [DF_" + vtable + "_parentID] DEFAULT '' FOR [parentID];";
-                    vsql += "ALTER TABLE [dbo].[" + vtable + "] ADD CONSTRAINT [DF_" + vtable + "_uid] DEFAULT '' FOR [uid];";
-                    vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_masterID] ON " + vtable + " ([masterID] ASC) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY];";
-                    vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_name] ON " + vtable + " ([name] ASC) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY];";
-                    vsql += "CREATE NONCLUSTERED INDEX [idx_" + vtable + "_date] ON " + vtable + " ([date] ASC) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY];";
-                    var request10 = new Request(vs, function () {});
-                    request10.on('requestCompleted', function () {
-                        var request14 = new Request(vsql, function () {});
-                        request14.on('requestCompleted', function () {
+                    util.inherits(oCreateTable, EventEmitter);
+                    var m = new oCreateTable();
+                    m.on('done', function (status) {
+                        if(!querystring.noReturn == "Y") { // call from cTables
                             var rv = "db table created " + new Date().toISOString();
                             response.writeHead(200, {"Content-Type": "text/plain"});
                             response.write(rv);
                             response.end();
-                            connection.close();
-                        });
-                        connection.execSql(request14);
+                        }
+                        connection.close();
                     });
-                    connection.execSql(request10);
+                    m.handle(m, vtable, connection);
                     return;
+                case "KB_ctables":
+                    var xR = JSON.parse(postData);
+                    var tt=[];
+                    for(var x in xR){
+                        if(xR[x].oldID == ""){
+                            tt.push(querystring.module + "_" + x);
+                        }
+                    }
+                    util.inherits(oCreateTable, EventEmitter);
+                    var m = new oCreateTable();
+                    var vtable = tt.pop();
+                    m.on('done', function (status) {
+                        vtable = tt.pop();
+                        if (vtable !== undefined && vtable !== null) {
+                            m.handle(m, vtable, connection);
+                        } else {
+                            var vsql = "";
+                            for(var x in xR){
+                                if(xR[x].oldID == ""){
+                                    vsql += "INSERT INTO KB_tables (ID, masterID, parentID, sequence, infoJSON) VALUES ('" + xR[x].newID + "','" +  xR[x].masterID + "', '" + xR[x].parentID + "', 0, '{\"name\":\"" + x + "\"}');";
+                                } else {
+                                    vsql+="UPDATE KB_tables SET parentID = '" + xR[x].parentID + "' WHERE ID = '" + xR[x].oldID + "'; ";
+                                }
+                            }
+                            var request33= new Request(vsql, function () {});
+                            request33.on('requestCompleted', function () {
+                                    var rv = "db tables created " + new Date().toISOString();
+                                    response.writeHead(200, {"Content-Type": "text/plain"});
+                                    response.write(rv);
+                                    response.end();
+                                    connection.close();
+                            });
+                            connection.execSql(request33);
+                        }
+                    });
+                    m.handle(m, vtable, connection);
+                    return;                
                 case "KB_query":
                     var vtable = querystring.module + "_" + querystring.table;
                     vsql = "IF EXISTS(SELECT 1 FROM sys.views WHERE name = '" + vtable + "' AND type = 'v') DROP VIEW v" + vtable;
@@ -237,6 +314,14 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                         });
                     });
                     connection.execSql(request11);
+                    return;
+                case "KB_saveCode":
+                    saveCode.start(connection,function (result){
+                        response.writeHead(200, {"Content-Type": "text/plain"});
+                        response.write(result);
+                        response.end();
+                        connection.close();
+                    });
                     return;
                 case "KB_chart":
                     vrows = "";
@@ -375,7 +460,8 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                     } else {
                         vw = " masterID = '' ";
                     }
-                    var vv = JSON.parse(postData).sql;
+                    var h = JSON.parse(postData);
+                    var vv = h.sql;
                     if (vv !== "") {
                         vw += " AND " + vv;
                     }
@@ -410,6 +496,9 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                         });
                         response.write(JSON.stringify(ttt));
                         response.end();
+                        if(querystring.table == "airports" || querystring.table == "operations"){
+                            flightscheduler.start(io, querystring.table,tt[1]);
+                        }                    
                     });
                     connection.execSql(request1);
                     return;
@@ -439,9 +528,8 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                     request.addParameter('objJSON', TYPES.NVarChar, postData, {
                         length: 9000
                     });
-                    request.addOutputParameter('nid', TYPES.NVarChar, {
-                        length: 50
-                    });  
+                    request.addOutputParameter('nid', TYPES.UniqueIdentifier);  
+                    rv = "";
                     break;
                 case "KB_n_delete":
                     request.addParameter('module', TYPES.NVarChar, querystring.module, {
@@ -474,15 +562,18 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
                     break;
             }
             request.on('returnValue', function (paramName, value, metadata) {
-                rv = value;
+                if(paramName == "nid")
+                {
+                    rv += value; 
+                }
             });
             request.on('requestCompleted', function () {
-                connection.close();
                 response.writeHead(200, {
                     "Content-Type": "text/plain"
                 });
                 response.write(rv); // response.data, new ID after insert
                 response.end();
+                connection.close();
             });
             request.on('error', function (err) {
                 response.writeHead(300, {
@@ -495,6 +586,6 @@ function start(storedProcedure, response, postData, querystring, io, callback) {
             connection.callProcedure(request);
         }
     });
-}
+};
 
 exports.start = start;

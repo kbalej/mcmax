@@ -28,6 +28,10 @@ function KB_table(response, postData, pathname, querystring, request, dbh, io) {
     io.emit("system","Request handler 'KB_table' was called");
     dbh.start("KB_table", response, postData, querystring, io);
 }
+function KB_ctables(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_ctables' was called");
+    dbh.start("KB_ctables", response, postData, querystring, io);
+}
 function KB_query(response, postData, pathname, querystring, request, dbh, io) {
     io.emit("system","Request handler 'KB_query' was called");
     dbh.start("KB_query", response, postData, querystring, io);
@@ -35,6 +39,10 @@ function KB_query(response, postData, pathname, querystring, request, dbh, io) {
 function KB_bDB(response, postData, pathname, querystring, request, dbh, io) {
     io.emit("system","Request handler 'KB_bDB' was called");
     dbh.start("KB_bDB", response, postData, querystring, io);
+}
+function KB_saveCode(response, postData, pathname, querystring, request, dbh, io) {
+    io.emit("system","Request handler 'KB_saveCode' was called");
+    dbh.start("KB_saveCode", response, postData, querystring, io);
 }
 function KB_cModule(response, postData, pathname, querystring, request, dbh, io) {
     io.emit("system","Request handler 'KB_cModule' was called");
@@ -161,21 +169,8 @@ function KB_sendMessage(response, postData, pathname, querystring, request, dbh,
 }
 function KB_showFile(response, postData, pathname, querystring, request, dbh, io) {
     io.emit("system","Request handler 'KB_showFile' was called");
-    if(pathname == undefined || pathname == "") {
-        var floc = __dirname + "index.html";
-        fs.readFile(floc + pathname, 'utf8',
-            function (err, data) {
-                if (err) {
-                    response.writeHead(300, { "Content-Type": "text/plain" });
-                    response.write("index not loaded");
-                    response.end();
-                } else {
-                    response.writeHead(200, { "Content-Type": "text/html" });
-                    response.write(data);
-                    response.end();
-                }
-            }
-        );
+    if(pathname == undefined || pathname == "/") {
+        dbh.start("KB_website", response, postData, querystring, io);
     } else {
         var floc = __dirname + "/doc/";
         fs.readFile(floc + pathname, 'utf8',
@@ -204,8 +199,10 @@ exports.KB_doc = KB_doc;
 exports.KB_chart = KB_chart;
 exports.KB_carousel = KB_carousel;
 exports.KB_table = KB_table;
+exports.KB_ctables = KB_ctables;
 exports.KB_query = KB_query;
 exports.KB_bDB = KB_bDB;
+exports.KB_saveCode = KB_saveCode;
 exports.KB_cModule = KB_cModule;
 exports.KB_showFile = KB_showFile;
 exports.KB_getStats = KB_getStats;
